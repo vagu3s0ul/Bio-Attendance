@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPS Attendance — App Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAFAFA; --surface:#FFFFFF; --surface-low:#F3F3F3; --surface-high:#E8E8E8;
+    --primary:#2D6CDF; --on-primary:#FFFFFF; --primary-soft:#D9E2FF;
+    --text:#1A1A1B; --muted:#717172; --faint:#9AA0A6; --outline:#EEEEEE;
+    --compliant:#006D37; --success:#27AE60; --danger:#E74C3C; --danger-soft:#FDECEA;
+    --warning:#F39C12; --warning-bg:#FFF9E6; --warning-text:#805D00; --neutral-chip:#EEEEEE;
+    --radius-card:16px; --radius-btn:12px; --radius-chip:8px;
+    --shadow:0px 4px 12px rgba(0,0,0,0.03); --shadow-lift:0px 8px 16px rgba(0,0,0,0.08);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:linear-gradient(160deg,#F2F6FD 0%,#FAFAFA 55%,#F5F5F5 100%);
+    min-height:100vh; display:flex; align-items:center; justify-content:center; gap:56px; flex-wrap:wrap; padding:48px 28px;
+    color:var(--text);
+  }
+
+  /* ---------- side panel ---------- */
+  .side{max-width:360px;background:var(--surface);border-radius:20px;border:1px solid var(--outline);
+    box-shadow:var(--shadow);padding:28px}
+  .side .pill{display:inline-block;background:var(--primary-soft);color:var(--primary);
+    font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;margin-bottom:16px;letter-spacing:.3px}
+  .side h1{font-size:26px;font-weight:300;letter-spacing:-.5px;margin-bottom:10px}
+  .side h1 b{font-weight:700;color:var(--primary)}
+  .side p{color:var(--muted);font-size:14px;line-height:1.65;margin-bottom:14px}
+  .side ul{list-style:none;font-size:13px;color:var(--muted);line-height:2}
+  .side ul b{color:var(--text);font-weight:600}
+  .side .tags{margin-top:20px}
+  .side .tag{display:inline-flex;background:var(--surface-low);border:1px solid var(--outline);color:var(--muted);
+    font-size:11.5px;padding:6px 12px;border-radius:10px;margin:4px 6px 0 0}
+
+  .stage{position:relative}
+  .phone{
+    width:375px;height:812px;border-radius:44px;background:#111;
+    box-shadow:0 0 0 10px #20242C,0 0 0 12px #3A3F49,0 40px 80px rgba(26,26,27,.25);
+    overflow:hidden;position:relative;
+  }
+  .notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:120px;height:26px;
+    background:#111;border-radius:20px;z-index:60}
+  .screen{position:absolute;inset:0;display:none;flex-direction:column;background:var(--bg)}
+  .screen.active{display:flex}
+  .statusbar{height:44px;background:transparent;display:flex;align-items:flex-end;justify-content:space-between;
+    padding:0 26px 8px;color:var(--text);font-size:13px;font-weight:600;flex:none}
+  .statusbar .dots{display:flex;gap:3px;align-items:center}
+  .statusbar .dots i{width:4px;height:4px;border-radius:50%;background:var(--text);opacity:.8}
+  .statusbar .dots i:last-child{width:9px;border-radius:2px}
+
+  /* ---------- login ---------- */
+  .login{background:var(--bg)}
+  .login-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:24px 24px 28px;position:relative;overflow:hidden}
+  .blob{position:absolute;border-radius:50%;background:var(--primary-soft);opacity:.5;filter:blur(2px);pointer-events:none}
+  .blob.b1{width:180px;height:180px;top:-70px;right:-70px}
+  .blob.b2{width:180px;height:180px;bottom:-70px;left:-70px}
+  .card{background:var(--surface);border-radius:var(--radius-card);border:1px solid var(--outline);
+    box-shadow:var(--shadow);padding:26px 24px;z-index:2}
+  .badge{margin:0 auto 16px;width:64px;height:64px;border-radius:50%;border:2px solid var(--primary);
+    display:flex;align-items:center;justify-content:center}
+  .badge span{font-size:15px;font-weight:700;letter-spacing:1px;color:var(--primary)}
+  .card h1{font-size:20px;font-weight:400;text-align:center;color:var(--text)}
+  .card .sub{font-size:14px;color:var(--muted);text-align:center;margin:5px 0 24px}
+  .fld{position:relative;margin-bottom:16px}
+  .fld label{display:block;font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .fld .ic{position:absolute;left:14px;top:33px;color:var(--muted);font-size:16px}
+  .fld input{width:100%;height:44px;border:1px solid var(--outline);border-radius:var(--radius-btn);
+    padding:0 14px 0 40px;font-size:14px;background:var(--bg);color:var(--text);outline:none;transition:.15s}
+  .fld input:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(45,108,223,.15)}
+  .opts{display:flex;justify-content:space-between;align-items:center;margin:2px 0 6px}
+  .opts .rem{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);cursor:pointer}
+  .opts .box{width:18px;height:18px;border-radius:5px;border:1px solid var(--outline);background:var(--surface-high);
+    display:flex;align-items:center;justify-content:center;color:transparent;font-size:12px}
+  .opts .rem.checked .box{background:var(--compliant);border-color:var(--compliant);color:#fff}
+  .opts .forgot{font-size:12px;color:var(--primary);cursor:pointer}
+  .btn{width:100%;height:44px;border:none;border-radius:var(--radius-btn);font-size:14px;font-weight:600;
+    color:var(--on-primary);background:var(--primary);cursor:pointer;transition:.18s;box-shadow:var(--shadow-lift);
+    display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn:hover{filter:brightness(1.06)}
+  .btn:active{transform:scale(.985)}
+  .adv{margin-top:16px;text-align:center;font-size:12px;color:var(--muted);cursor:pointer;font-weight:600}
+  .advbox{display:none;margin-top:12px;border-top:1px solid var(--outline);padding-top:14px}
+  .advbox.open{display:block}
+  .advbox .lbl{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
+  .advbox .url{border:1px solid var(--outline);border-radius:var(--radius-btn);padding:10px 12px;font-size:12.5px;color:var(--text);background:var(--bg)}
+  .advbox .note{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}
+  .login-foot{color:var(--faint);font-size:12px;text-align:center;margin-top:22px;z-index:2}
+
+  /* ---------- app shell ---------- */
+  .shell-head{height:52px;background:var(--surface);border-bottom:1px solid var(--outline);
+    display:flex;align-items:center;padding:0 16px;gap:10px;flex:none;box-shadow:0 4px 12px rgba(0,0,0,.03)}
+  .shell-head .ttl{font-size:20px;font-weight:700;color:var(--primary);letter-spacing:.5px}
+  .shell-head .av{margin-left:auto;width:34px;height:34px;border-radius:50%;background:var(--surface-high);
+    display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:13px;font-weight:600}
+  .shell-head .back{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:var(--primary);font-size:20px;cursor:pointer;margin-left:-6px}
+  .shell-head .back:hover{background:var(--surface-low)}
+  .scroll{flex:1;overflow-y:auto;padding:16px 16px 24px}
+
+  .greet{font-size:22px;font-weight:300;letter-spacing:-.3px;color:var(--text)}
+  .greet-sub{font-size:14px;color:var(--muted);margin:2px 0 14px}
+  .deadline{display:flex;gap:8px;align-items:center;background:var(--warning-bg);border-radius:var(--radius-btn);
+    padding:10px 12px;font-size:12.5px;color:var(--warning-text);margin-bottom:14px}
+  .deadline b{font-weight:600}
+
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+  .stat{background:var(--surface);border-radius:var(--radius-card);padding:14px;box-shadow:var(--shadow);height:104px;
+    display:flex;flex-direction:column;justify-content:space-between}
+  .stat .l{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+  .stat .v{font-size:30px;font-weight:300;letter-spacing:-.5px;line-height:1}
+  .stat .v.accent{color:var(--primary)}
+  .stat .v.red{color:var(--danger)}
+
+  .sec{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  .actions{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
+  .act{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:var(--radius-card);padding:14px;
+    min-height:72px;box-shadow:var(--shadow);cursor:pointer;transition:.18s}
+  .act:hover{transform:translateY(-1px);box-shadow:var(--shadow-lift)}
+  .act:active{transform:scale(.985)}
+  .act.filled{background:var(--primary)}
+  .act .ic{width:40px;height:40px;border-radius:var(--radius-btn);background:var(--surface-low);display:flex;
+    align-items:center;justify-content:center;font-size:18px;flex:none}
+  .act.filled .ic{background:rgba(255,255,255,.2)}
+  .act .tx{flex:1;min-width:0}
+  .act .tx b{font-size:15px;font-weight:600;display:block}
+  .act .tx span{font-size:12px;color:var(--muted);display:block;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .act.filled .tx b{color:#fff}
+  .act.filled .tx span{color:rgba(255,255,255,.8)}
+  .act .arr{color:var(--muted)}
+  .act.filled .arr{color:rgba(255,255,255,.85)}
+
+  .status-card{background:var(--surface);border-radius:var(--radius-card);border:1px solid var(--outline);
+    box-shadow:var(--shadow);padding:20px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;margin-bottom:4px}
+  .status-card .s-ic{width:48px;height:48px;border-radius:50%;background:var(--surface-low);display:flex;
+    align-items:center;justify-content:center;font-size:22px;margin-bottom:4px}
+  .status-card .s-t{font-size:18px;font-weight:400}
+  .status-card .s-b{font-size:13px;color:var(--muted);line-height:1.5}
+  .status-card .s-btn{margin-top:8px;width:100%;height:44px;border:none;border-radius:var(--radius-btn);
+    background:var(--primary);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+  .status-card .s-btn:active{transform:scale(.985)}
+
+  .list{background:var(--surface);border-radius:var(--radius-card);box-shadow:var(--shadow);padding:6px}
+  .row{display:flex;align-items:center;padding:12px;gap:10px;cursor:pointer;border-radius:10px}
+  .row+.row{border-top:1px solid var(--outline)}
+  .row:hover{background:var(--surface-low)}
+  .row .c{flex:1;min-width:0}
+  .row .c b{font-size:15px;font-weight:600;display:block}
+  .row .c span{font-size:12px;color:var(--muted);display:block;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .cnt{font-size:12px;color:var(--muted);font-weight:600;margin-right:6px;white-space:nowrap}
+  .chip{font-size:11px;font-weight:600;padding:4px 9px;border-radius:8px;white-space:nowrap}
+  .chip.done{background:#E9F7EF;color:var(--compliant)}
+  .chip.nd{background:var(--danger-soft);color:var(--danger)}
+  .chip.late{background:var(--warning-bg);color:var(--warning-text)}
+
+  /* ---------- entry ---------- */
+  .actionbar{display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:10px 16px;border-bottom:1px solid var(--outline);flex:none}
+  .datewrap{display:flex;align-items:center;gap:2px}
+  .datewrap .darr{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--primary);cursor:pointer}
+  .datewrap .darr:hover{background:var(--surface-low)}
+  .datewrap .lbl{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+  .datewrap .val{font-size:16px;font-weight:600;color:var(--primary)}
+  .markall{display:flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:var(--radius-btn);
+    border:1px solid var(--primary);background:#fff;color:var(--primary);font-size:12.5px;font-weight:600;cursor:pointer}
+  .markall:active{transform:scale(.97)}
+  .latebar{display:flex;gap:8px;align-items:center;background:var(--warning-bg);padding:8px 16px;font-size:12px;color:var(--warning-text)}
+  .entry-list{padding:16px;display:flex;flex-direction:column;gap:12px}
+  .scard{background:var(--surface);border-radius:var(--radius-card);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:10px}
+  .scard .roll{font-size:12px;font-weight:600;letter-spacing:.5px;color:var(--muted)}
+  .scard .nm{font-size:18px;font-weight:400;color:var(--text);margin-top:-4px}
+  .chips{display:flex;gap:6px}
+  .tchip{flex:1;min-width:0;min-height:48px;border:none;border-radius:12px;background:var(--neutral-chip);
+    color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    padding:7px 4px;cursor:pointer;transition:all .18s;font-size:11px;position:relative}
+  .tchip .i{font-size:18px;line-height:1}
+  .tchip .dot{position:absolute;top:5px;right:5px;width:11px;height:11px;border-radius:50%;
+    background:var(--surface-high);border:1px solid var(--outline);transition:all .18s}
+  .tchip.compliant .dot{background:var(--compliant);border-color:var(--compliant)}
+  .tchip.non .dot{background:var(--danger);border-color:var(--danger)}
+  .tchip.compliant{color:var(--compliant)}
+  .tchip.non{color:var(--danger)}
+  .tchip:active{transform:scale(.93)}
+  .scard .rmk{height:36px;border:none;border-radius:var(--radius-chip);background:var(--surface-low);
+    padding:0 12px;font-size:13px;color:var(--text);outline:none}
+
+  /* deadline card */
+  .deadline-card{display:flex;align-items:center;gap:12px;background:#fff;border-radius:var(--radius-card);
+    box-shadow:var(--shadow);padding:14px;margin-bottom:20px}
+  .dl-ic{width:40px;height:40px;border-radius:var(--radius-btn);background:var(--primary-soft);display:flex;
+    align-items:center;justify-content:center;font-size:18px}
+  .dl-lbl{font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+  .dl-val{font-size:18px;font-weight:600;color:var(--text);margin-top:1px}
+  .dl-btn{min-height:36px;padding:0 16px;border-radius:var(--radius-btn);border:1px solid var(--primary);
+    background:#fff;color:var(--primary);font-size:13px;font-weight:600;cursor:pointer}
+  .dl-btn:active{transform:scale(.97)}
+  .dl-edit{display:flex;gap:8px;align-items:center;flex:1}
+  .dl-edit input{flex:1;height:36px;border:1px solid var(--primary);border-radius:var(--radius-btn);padding:0 10px;
+    font-size:14px;color:var(--text);outline:none}
+
+  /* manage screens */
+  .msearch{display:flex;align-items:center;gap:8px;height:44px;border:1px solid var(--outline);border-radius:var(--radius-btn);
+    background:#fff;padding:0 12px;margin:14px 16px 0}
+  .msearch input{flex:1;border:none;outline:none;font-size:13.5px;color:var(--text);font-family:inherit}
+  .mchips{display:flex;gap:8px;overflow-x:auto;padding:12px 16px}
+  .mchip{flex:none;min-height:32px;padding:0 14px;border-radius:999px;border:1px solid var(--outline);background:#fff;
+    font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center}
+  .mchip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+  .madd{margin:0 16px 12px;height:44px;border:none;border-radius:var(--radius-btn);background:var(--primary);color:#fff;
+    font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;width:calc(100% - 32px)}
+  .mlist{padding:0 16px;display:flex;flex-direction:column;gap:12px}
+  .mcard{background:#fff;border-radius:var(--radius-card);box-shadow:var(--shadow);padding:14px;display:flex;align-items:center;gap:10px}
+  .mcard .meta{font-size:11px;font-weight:600;letter-spacing:.4px;color:var(--muted)}
+  .mcard .nm{font-size:16px;font-weight:400;color:var(--text);margin-top:2px}
+  .mcard .acts{display:flex;gap:6px}
+  .mcard .acts i{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-style:normal;font-size:15px;color:var(--muted)}
+  .mcard .acts i.del{color:var(--danger)}
+  .mcard .tav{width:42px;height:42px;border-radius:21px;background:var(--surface-high);color:var(--primary);
+    display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;flex:none}
+  .mcard .trow{display:flex;align-items:center;gap:8px}
+  .tbadge{background:var(--surface-high);color:var(--muted);font-size:9.5px;font-weight:600;letter-spacing:.4px;
+    border-radius:6px;padding:2px 7px}
+  .tbadge.admin{background:var(--primary-soft);color:var(--primary)}
+  .mpage{text-align:center;font-size:12.5px;color:var(--muted);font-weight:600;padding:10px 0 4px}
+  .end{text-align:center;font-size:11px;color:var(--faint);padding:4px 0 8px}
+  .savearea{background:var(--surface);border-top:1px solid var(--outline);padding:12px 16px;display:flex;flex-direction:column;gap:8px;flex:none}
+  .savearea .pr{display:flex;justify-content:space-between;font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase}
+  .savearea .pr .cnt{color:var(--primary)}
+  .ptrack{height:4px;border-radius:2px;background:var(--surface-high);overflow:hidden}
+  .pfill{height:100%;background:var(--primary);border-radius:2px;transition:width .3s}
+  .savebtn{width:100%;min-height:44px;border:none;border-radius:var(--radius-btn);background:var(--primary);color:#fff;
+    font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:var(--shadow-lift)}
+  .savebtn:active{transform:scale(.985)}
+
+  /* ---------- reports ---------- */
+  .filters{display:flex;gap:8px;margin-bottom:14px}
+  .pill{flex:1;text-align:center;padding:9px 6px;border-radius:var(--radius-btn);font-size:12px;font-weight:600;cursor:pointer;
+    border:1px solid var(--outline);background:#fff;color:var(--muted)}
+  .pill.on{background:var(--primary);border-color:var(--primary);color:#fff}
+  .rep{background:#fff;border-radius:var(--radius-card);box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
+  .rep .rt{font-size:14px;font-weight:600;margin-bottom:10px}
+  .rep .bar{display:flex;align-items:center;gap:8px;margin:7px 0}
+  .rep .bar .lbl{width:52px;font-size:11.5px;font-weight:600;color:var(--muted)}
+  .rep .bar .track{flex:1;height:9px;background:#EEF1F6;border-radius:6px;overflow:hidden}
+  .rep .bar .fill{height:100%;border-radius:6px}
+  .rep .bar .pct{width:34px;text-align:right;font-size:11.5px;font-weight:600;color:var(--text)}
+
+  /* ---------- notify parents ---------- */
+  .nhead{padding:14px 16px 8px}
+  .nhead .l1{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+  .nhead .l2{font-size:13px;color:var(--muted);margin-top:2px}
+  .waflag{display:flex;align-items:center;gap:8px;background:var(--warning-bg);border-radius:var(--radius-btn);padding:10px 12px;font-size:12px;color:var(--warning-text);margin:0 16px 10px;line-height:1.5}
+  .selectall{display:flex;align-items:center;gap:10px;padding:2px 2px 10px;font-size:13px;font-weight:600;color:var(--primary);cursor:pointer;user-select:none}
+  .nrow{display:flex;align-items:center;gap:10px;background:#fff;border-radius:var(--radius-card);box-shadow:var(--shadow);padding:12px;margin-bottom:10px}
+  .nrow.greyed{background:var(--surface-low);opacity:.82}
+  .nrow .chk{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--primary);display:flex;align-items:center;justify-content:center;color:transparent;font-size:13px;flex:none;cursor:pointer;background:#fff}
+  .nrow .chk.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .nrow .chk.off{border-color:var(--outline);background:var(--surface-high);cursor:default}
+  .nrow .nb{flex:1;min-width:0}
+  .nrow .nb b{font-size:15px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nrow .nb .rl{font-size:11.5px;color:var(--muted);display:block;margin-top:1px}
+  .ntags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .ntag{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--danger-soft);color:var(--danger)}
+  .ntag.grey{background:var(--surface-high);color:var(--faint)}
+  .wabtn{flex:none;min-height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--compliant);background:#fff;color:var(--compliant);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px}
+  .wabtn:active{transform:scale(.97)}
+  .wabtn.addnum{border-color:var(--primary);color:var(--primary)}
+  .sentline{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--compliant);white-space:nowrap}
+  /* whatsapp number modal */
+  .wamodal{position:absolute;inset:0;background:rgba(26,26,27,.45);display:none;align-items:center;justify-content:center;z-index:80;padding:24px}
+  .wamodal.open{display:flex}
+  .wamodal .box{width:100%;max-width:320px;background:#fff;border-radius:20px;padding:22px;box-shadow:var(--shadow-lift)}
+  .wamodal .box h3{font-size:17px;font-weight:400;margin-bottom:2px}
+  .wamodal .box .sub{font-size:12.5px;color:var(--muted);margin-bottom:14px}
+  .wamodal .acts{display:flex;gap:10px;margin-top:6px}
+  .wamodal .acts .btn{flex:1}
+  .wamodal .acts .btn.ghost{background:#fff;border:1px solid var(--outline);color:var(--text)}
+
+  /* ---------- profile ---------- */
+  .prof{background:#fff;border-radius:var(--radius-card);box-shadow:var(--shadow);padding:24px;display:flex;
+    flex-direction:column;align-items:center;gap:4px;margin-bottom:16px}
+  .prof .p-av{width:72px;height:72px;border-radius:50%;background:var(--surface-high);display:flex;align-items:center;
+    justify-content:center;color:var(--primary);font-size:28px;font-weight:600;margin-bottom:6px}
+  .prof .p-n{font-size:20px;font-weight:400}
+  .prof .p-r{font-size:13px;color:var(--muted);text-align:center}
+  .prof .p-out{margin-top:14px;display:flex;align-items:center;gap:6px;min-height:40px;padding:0 22px;
+    border-radius:var(--radius-btn);border:1px solid var(--danger);background:#fff;color:var(--danger);
+    font-size:13.5px;font-weight:600;cursor:pointer}
+  .set{background:#fff;border-radius:var(--radius-card);box-shadow:var(--shadow);padding:16px;margin-bottom:12px}
+  .set h4{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+  .set .in{border:1px solid var(--outline);border-radius:var(--radius-btn);padding:10px 12px;font-size:13px;color:var(--text);background:var(--bg);margin-bottom:10px}
+  .set .note{font-size:11.5px;color:var(--muted);line-height:1.6}
+  .set .sbtn{width:100%;min-height:44px;border:none;border-radius:var(--radius-btn);background:var(--primary);color:#fff;
+    font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px}
+
+  /* ---------- bottom nav ---------- */
+  .tabs{min-height:64px;background:var(--surface);border-top:1px solid var(--outline);display:flex;align-items:center;
+    justify-content:space-around;padding:6px 8px;flex:none}
+  .tab{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--radius-btn);cursor:pointer;
+    font-size:11px;font-weight:600;color:var(--muted);transition:.15s}
+  .tab .i{font-size:20px;line-height:1}
+  .tab:hover{background:var(--surface-low)}
+  .tab:active{transform:scale(.95)}
+  .tab.on{background:var(--primary);color:#fff}
+
+  .switch{position:absolute;top:-46px;right:0;z-index:70;display:flex;gap:6px;background:#fff;
+    border:1px solid var(--outline);border-radius:12px;padding:4px;box-shadow:var(--shadow)}
+  .switch button{border:none;background:transparent;color:var(--muted);font-size:12px;font-weight:600;padding:6px 14px;border-radius:9px;cursor:pointer}
+  .switch button.on{background:var(--primary);color:#fff}
+</style>
+</head>
+<body>
+
+<div class="side">
+  <div class="pill">📱 Android app — design preview</div>
+  <h1>SPS <b>Attendance</b></h1>
+  <p>Native app for the Sialkot Public School &amp; College <b>Daily Student Checking System</b> (attendance.spscsialkot.com). This is a clickable preview of the app's screens — the real app is Android-native (Expo) and signs into the live school system.</p>
+  <ul>
+    <li>• <b>Login</b> — signs into the live PHP site (session cookie)</li>
+    <li>• <b>Home</b> — role-aware dashboard: admin sees all 23 classes, teachers see their class</li>
+    <li>• <b>Daily Entry</b> — uniform · shoes · socks · haircut · nails · bag checklist</li>
+    <li>• <b>Notify Parents</b> — WhatsApp alerts for non-compliant students after save</li>
+    <li>• <b>Reports</b> — daily / monthly / individual student</li>
+    <li>• <b>Audit Trail, Manage, Export</b> — admin-only tools</li>
+  </ul>
+  <div class="tags">
+    <span class="tag">Expo SDK 51</span><span class="tag">React Native</span><span class="tag">TypeScript</span>
+    <span class="tag">SPSC Essence UI</span><span class="tag">PHP session sync</span>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="switch" id="roleSwitch">
+    <button id="swAdmin" class="on" onclick="setRole('admin')">Admin</button>
+    <button id="swTeacher" onclick="setRole('teacher')">Teacher</button>
+  </div>
+  <div class="phone">
+    <div class="notch"></div>
+
+    <!-- LOGIN -->
+    <div class="screen login active" id="s-login">
+      <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+      <div class="login-body">
+        <div class="blob b1"></div><div class="blob b2"></div>
+        <div class="card">
+          <div class="badge"><span>SPSC</span></div>
+          <h1>Daily Student Checking System</h1>
+          <p class="sub">Sign in to continue</p>
+          <div class="fld">
+            <label>Username</label>
+            <span class="ic">👤</span>
+            <input id="uname" value="admin" placeholder="Enter username">
+          </div>
+          <div class="fld">
+            <label>Password</label>
+            <span class="ic">🔒</span>
+            <input id="pass" type="password" value="••••••••" placeholder="Enter password">
+          </div>
+          <div class="opts">
+            <span class="rem checked" onclick="this.classList.toggle('checked')"><span class="box">✓</span>Remember me</span>
+            <span class="forgot">Forgot password?</span>
+          </div>
+          <button class="btn" onclick="doLogin()">Sign In <span>→</span></button>
+        </div>
+        <div class="login-foot">© 2026 Sialkot Public School &amp; College</div>
+      </div>
+    </div>
+
+    <!-- HOME -->
+    <div class="screen" id="s-home">
+      <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+      <div class="shell-head"><div class="ttl">SPSC</div><div class="av" id="headAv">A</div></div>
+      <div class="scroll">
+        <div class="greet" id="greet">Good morning, admin · Administrator</div>
+        <div class="greet-sub">Welcome back. Here is your overview for today.</div>
+        <div class="deadline">⚠️ &nbsp;Entries close at <b>&nbsp;09:30 AM&nbsp;</b> · 1st Period</div>
+        <div class="stats" id="statRow"></div>
+        <div class="sec">Quick Actions</div>
+        <div class="actions">
+          <div class="act filled" onclick="go('entry')"><div class="ic">✏️</div>
+            <div class="tx"><b>Daily Entry</b><span>Mark attendance and uniform</span></div><div class="arr">›</div></div>
+          <div class="act" onclick="go('reports')"><div class="ic">📊</div>
+            <div class="tx"><b>View Reports</b><span>Daily, weekly, monthly &amp; student-wise</span></div><div class="arr">›</div></div>
+          <div class="act adminonly" onclick="toast('Audit Trail — full web page with filters')"><div class="ic">🕵️</div>
+            <div class="tx"><b>Audit Trail</b><span>Secret entry timestamps &amp; late detection</span></div><div class="arr">›</div></div>
+          <div class="act adminonly" onclick="show('s-manage')"><div class="ic">👥</div>
+            <div class="tx"><b>Manage</b><span>Teachers, students &amp; CSV upload</span></div><div class="arr">›</div></div>
+          <div class="act" onclick="toast('Export — full web page')"><div class="ic">💾</div>
+            <div class="tx"><b>Export Data</b><span>Download records as CSV</span></div><div class="arr">›</div></div>
+        </div>
+        <div class="deadline-card adminonly" id="dlCard">
+          <div class="dl-ic">🕐</div>
+          <div><div class="dl-lbl">ATTENDANCE DEADLINE</div><div class="dl-val" id="dlVal">9:30 AM</div></div>
+          <button class="dl-btn" onclick="changeDeadline()">Change</button>
+        </div>
+        <div class="sec" id="statusTitle">Today's Entry Status</div>
+        <div id="statusArea"></div>
+      </div>
+      <div class="tabs">
+        <div class="tab on" onclick="tab('home')"><span class="i">🏠</span>Home</div>
+        <div class="tab" onclick="tab('entry')"><span class="i">☑️</span>Entry</div>
+        <div class="tab" onclick="tab('reports')"><span class="i">📈</span>Reports</div>
+        <div class="tab" onclick="tab('settings')"><span class="i">👤</span>Profile</div>
+      </div>
+    </div>
+
+    <!-- ENTRY -->
+    <div class="screen" id="s-entry">
+      <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+      <div class="shell-head"><div class="ttl">SPSC</div><div class="av">A</div></div>
+      <div class="actionbar">
+        <div class="datewrap">
+          <span class="darr" onclick="shiftDate(-1)">‹</span>
+          <div><div class="lbl">Date</div><div class="val" id="dateVal">Today, 9 Aug</div></div>
+          <span class="darr" onclick="shiftDate(1)">›</span>
+        </div>
+        <button class="markall" onclick="markAll()">✓✓ Mark All Compliant</button>
+      </div>
+      <div class="latebar" id="lateBar">⚠️ &nbsp;You are entering data after the deadline.</div>
+      <div class="scroll entry-list" id="entryList" style="padding:16px"></div>
+      <div class="savearea">
+        <div class="pr"><span>Progress</span><span class="cnt" id="progTxt">0 of 7 marked</span></div>
+        <div class="ptrack"><div class="pfill" id="progFill" style="width:0%"></div></div>
+        <button class="savebtn" onclick="saved()">💾 Save Entries</button>
+      </div>
+      <div class="tabs">
+        <div class="tab" onclick="tab('home')"><span class="i">🏠</span>Home</div>
+        <div class="tab on" onclick="tab('entry')"><span class="i">☑️</span>Entry</div>
+        <div class="tab" onclick="tab('reports')"><span class="i">📈</span>Reports</div>
+        <div class="tab" onclick="tab('settings')"><span class="i">👤</span>Profile</div>
+      </div>
+    </div>
+
+    <!-- NOTIFY PARENTS -->
+    <div class="screen" id="s-notify">
+      <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+      <div class="shell-head"><span class="back" onclick="show('s-entry')">‹</span><div class="ttl">SPSC</div><div class="av">a</div></div>
+      <div class="nhead">
+        <div><div class="l1">Notify Parents</div><div class="l2" id="notifySub">9 Aug 2026 · Class 10B</div></div>
+      </div>
+      <div class="scroll" id="notifyList" style="flex:1;padding:0 16px 110px"></div>
+      <div class="savearea" id="notifyBar" style="position:absolute;left:0;right:0;bottom:0">
+        <button class="savebtn" id="notifyBatchBtn" onclick="notifyBatch()">💬 Send to selected (0)</button>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="screen" id="s-reports">
+      <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+      <div class="shell-head"><div class="ttl">SPSC</div><div class="av">A</div></div>
+      <div class="scroll" style="padding-bottom:8px">
+        <div class="filters" style="flex-wrap:wrap">
+          <div class="pill on" onclick="repMode('daily',this)">Daily</div>
+          <div class="pill" id="repWeeklyPill" onclick="repMode('weekly',this)">Weekly</div>
+          <div class="pill" onclick="repMode('monthly',this)">Monthly</div>
+          <div class="pill" onclick="repMode('student',this)">Student-wise</div>
+          <div class="pill adminonly" id="repTeacherPill" style="display:none" onclick="repMode('teachers',this)">Teacher-wise</div>
+        </div>
+        <div class="rep" id="repFilter">
+          <div class="fld" id="repField">
+            <label>Date</label>
+            <input id="repDate" value="2026-08-09" style="padding:0 14px">
+          </div>
+          <div id="repClassWrap" class="adminonly" style="display:none;margin-top:12px">
+            <label style="font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Class</label>
+            <div class="mchips" style="padding:0;overflow-x:auto;display:flex">
+              <span class="mchip on">All Classes</span><span class="mchip">10B</span><span class="mchip">10G</span><span class="mchip">3B</span><span class="mchip">3G</span><span class="mchip">9Y</span>
+            </div>
+          </div>
+          <div id="repStudentWrap" style="display:none;margin-top:12px">
+            <label style="font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Student</label>
+            <div class="msearch" style="margin:0;height:40px">🔍 <input placeholder="Select a student…" value="1978 — M. Abdullah Waheed"></div>
+          </div>
+          <button class="madd" style="margin:14px 0 0;width:100%" onclick="genReport()">Generate Report</button>
+        </div>
+        <div id="repResult">
+          <span id="repScope" style="display:none">(7B)</span>
+          <div class="rep" style="text-align:center;color:var(--faint);font-size:12.5px;padding:28px 16px" id="repEmptyHint">Set your filters and tap Generate Report.</div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab" onclick="tab('home')"><span class="i">🏠</span>Home</div>
+        <div class="tab" onclick="tab('entry')"><span class="i">☑️</span>Entry</div>
+        <div class="tab on" onclick="tab('reports')"><span class="i">📈</span>Reports</div>
+        <div class="tab" onclick="tab('settings')"><span class="i">👤</span>Profile</div>
+      </div>
+    </div>
+
+    <!-- MANAGE HUB -->
+    <div class="screen" id="s-manage">
+      <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+      <div class="shell-head"><div class="ttl">SPSC</div><div class="av">A</div></div>
+      <div class="scroll">
+        <div class="greet">Teachers &amp; Students</div>
+        <div class="greet-sub">Add, edit or deactivate accounts and rosters.</div>
+        <div class="sec">Manage</div>
+        <div class="actions">
+          <div class="act filled" onclick="show('s-manage-students')"><div class="ic">👥</div>
+            <div class="tx"><b>Manage Students</b><span>Search, filter by class, add or edit students</span></div><div class="arr">›</div></div>
+          <div class="act" onclick="show('s-manage-teachers')"><div class="ic">👩‍🏫</div>
+            <div class="tx"><b>Manage Teachers</b><span>Add teachers and control their access &amp; class</span></div><div class="arr">›</div></div>
+        </div>
+        <div class="sec">Bulk Upload</div>
+        <div class="act filled" onclick="toast('CSV picked — uploading to manage.php…')"><div class="ic">📤</div>
+          <div class="tx"><b>Choose CSV &amp; Upload</b><span>Native file picker → bulk_upload</span></div><div class="arr">›</div></div>
+      </div>
+    </div>
+
+    <!-- MANAGE STUDENTS -->
+    <div class="screen" id="s-manage-students">
+      <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+      <div class="shell-head"><span class="back" onclick="show('s-manage')">‹</span><div class="ttl">SPSC</div><div class="av">A</div></div>
+      <div class="msearch">🔍 <input placeholder="Search by name or roll number..."></div>
+      <div class="mchips" id="stuChips"></div>
+      <button class="madd" onclick="toast('Add New Student — form opens')">＋ ADD NEW STUDENT</button>
+      <div class="scroll mlist" id="stuList" style="padding:0 16px"></div>
+      <div class="mpage" id="stuPage">Page 1 of 32</div>
+    </div>
+
+    <!-- MANAGE TEACHERS -->
+    <div class="screen" id="s-manage-teachers">
+      <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+      <div class="shell-head"><span class="back" onclick="show('s-manage')">‹</span><div class="ttl">SPSC</div><div class="av">A</div></div>
+      <div style="padding:14px 16px 12px"><button class="madd" style="width:100%;margin:0" onclick="toast('Add New Teacher — form opens')">＋ ADD TEACHER</button></div>
+      <div class="scroll mlist" id="tchList" style="padding:0 16px"></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="screen" id="s-settings">
+      <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+      <div class="shell-head"><div class="ttl">SPSC</div><div class="av">A</div></div>
+      <div class="scroll">
+        <div class="prof">
+          <div class="p-av" id="pAv">A</div>
+          <div class="p-n" id="pName">admin</div>
+          <div class="p-r" id="pRole">Administrator · Class ALL</div>
+          <button class="p-out" onclick="logout()">⎋ Log out</button>
+        </div>
+        <div class="stats" id="pStats" style="margin-bottom:14px"></div>
+        <div class="set">
+          <h4>About</h4>
+          <div class="note">SPS Attendance v1.0.0 — native Android app for the Daily Student Checking System. Expo SDK 51 · React Native · TypeScript · SPSC Essence design.</div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab" onclick="tab('home')"><span class="i">🏠</span>Home</div>
+        <div class="tab" onclick="tab('entry')"><span class="i">☑️</span>Entry</div>
+        <div class="tab" onclick="tab('reports')"><span class="i">📈</span>Reports</div>
+        <div class="tab on" onclick="tab('settings')"><span class="i">👤</span>Profile</div>
+      </div>
+    </div>
+
+    <!-- WHATSAPP NUMBER MODAL -->
+    <div class="wamodal" id="waModal">
+      <div class="box">
+        <h3>WhatsApp number</h3>
+        <div class="sub" id="waModalSub">For <b>M. Abdullah Waheed</b> · Roll 1978</div>
+        <div class="fld">
+          <label>Number (e.g. 03001234567)</label>
+          <span class="ic">📞</span>
+          <input id="waInput" placeholder="+92 300 1234567" style="padding:0 14px 0 40px">
+        </div>
+        <div class="acts">
+          <button class="btn ghost" onclick="closeWaModal()">Cancel</button>
+          <button class="btn" onclick="saveWa()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let role = 'admin';
+  const CLASSES_ADMIN = [
+    ['10B','Ms. Khadija',20,0,'nd'],['10G','Ms. Shamsa',23,0,'nd'],['3B','Ms. Amina',25,0,'nd'],
+    ['3G','Ms. Faiza',29,0,'nd'],['3R','Ms. Khadija S',26,0,'nd'],['4B','Ms. Humna',28,0,'nd'],
+    ['4G','Ms. Sumaira',23,0,'nd'],['4R','Ms. Rukhsana',29,0,'nd'],['4Y','Ms. Saima',22,0,'nd'],
+    ['5B','Mr. Imran',24,24,'done'],['5G','Ms. Kiran',27,27,'done'],['5R','Ms. Nadia',26,26,'done'],
+    ['6B','Ms. Farah',29,29,'done'],['6G','Mr. Asif',40,40,'done'],['6R','Ms. Tahira',29,29,'done'],
+    ['7B','Ms. Mehwish',25,25,'done'],['7G','Mr. Khalid',30,30,'done'],['7R','Ms. Sadia',30,30,'done'],
+    ['8B','Ms. Rubina',34,34,'done'],['8G','Mr. Naveed',35,35,'done'],['9B','Ms. Iram',23,0,'nd'],
+    ['9G','Mr. Faisal',24,0,'nd'],['9Y','Ms. Beenish',21,0,'nd'],
+  ];
+  const STUDENTS = [['1978','M. Abdullah Waheed'],['2105','M. Ismail'],['2153','M. Zain Ul Abideen'],
+    ['2156','Abdullah Rasheed'],['2186','Khizer Abbas'],['2426','M. Abdullah Adnan'],['2544','Muhammad Talha']];
+  const CHIPS = [['👕','Uniform'],['👟','Shoes'],['🧦','Socks'],['🙂','Haircut'],['🖐️','Nails'],['🎒','Bag']];
+
+  function $(s){return document.querySelector(s)}
+  function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$('#'+id).classList.add('active')}
+  function go(id){ if(id==='entry') tab('entry'); else if(id==='reports') tab('reports'); else show('s-home') }
+  function toast(m){ const t=document.createElement('div'); t.textContent=m;
+    t.style.cssText='position:absolute;left:50%;bottom:90px;transform:translateX(-50%);background:#1A1A1B;color:#fff;padding:10px 16px;border-radius:12px;font-size:12.5px;z-index:99;opacity:0;transition:opacity .2s';
+    document.querySelector('.stage').appendChild(t); requestAnimationFrame(()=>t.style.opacity='1');
+    setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),250)},1800) }
+
+  function setRole(r){
+    role=r;
+    document.getElementById('swAdmin').classList.toggle('on',r==='admin');
+    document.getElementById('swTeacher').classList.toggle('on',r==='teacher');
+    document.querySelectorAll('.adminonly').forEach(a=>a.style.display=r==='admin'?'flex':'none');
+    const tp=document.getElementById('repTeacherPill'); if(tp) tp.style.display=r==='admin'?'flex':'none';
+    const wp=document.getElementById('repWeeklyPill'); if(wp) wp.style.display=r==='admin'?'none':'flex';
+    const rw=document.getElementById('repClassWrap'); if(rw) rw.style.display=r==='admin'&&document.querySelector('#s-reports .pill.on').textContent!=='Student-wise'?'flex':'none';
+    renderHome();
+    renderProfile();
+  }
+
+  function doLogin(){
+    const u=document.getElementById('uname').value.trim();
+    if(!u){alert('Enter your username and password');return}
+    show('s-home'); tab('home');
+  }
+  function logout(){ show('s-login') }
+
+  function renderHome(){
+    const admin = role==='admin';
+    const h = new Date().getHours();
+    document.getElementById('greet').textContent = (h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', '+(admin?'admin':'amina')+' · '+(admin?'Administrator':'Teacher');
+    document.getElementById('headAv').textContent = (admin?'A':'a').toUpperCase();
+    const statRow = document.getElementById('statRow');
+    if(admin){
+      statRow.innerHTML = st('Teachers','23')+st('Students','622')+st('Classes','23')+st("Today's Entries",'0','accent');
+      document.getElementById('statusTitle').textContent="Today's Entry Status";
+      const rows = CLASSES_ADMIN.map(c=>{
+        const done=c[4]==='done',late=c[4]==='late';
+        return `<div class="row" onclick="tab('reports')">
+          <div class="c"><b>${c[0]}</b><span>${c[1]}</span></div>
+          <span class="cnt">${c[3]}/${c[2]} entered</span>
+          <span class="chip ${done?'done':late?'late':'nd'}">${done?'Done':late?'Late':'Not Done'}</span></div>`;
+      }).join('');
+      document.getElementById('statusArea').innerHTML=`<div class="list">${rows}</div>`;
+    } else {
+      statRow.innerHTML = st('Total Students','25')+st("Today's Entries",'0/25','red')+st('Days This Month','9')+st('Date','9 Aug');
+      document.getElementById('statusTitle').textContent='Quick Status — Today';
+      document.getElementById('statusArea').innerHTML=`<div class="status-card">
+        <div class="s-ic">🕐</div><div class="s-t">Today's entry not yet started</div>
+        <div class="s-b">Complete your daily checks for your class.</div>
+        <button class="s-btn" onclick="tab('entry')">Start Now</button></div>`;
+    }
+  }
+  function st(l,v,cls){return `<div class="stat"><div class="l">${l}</div><div class="v ${cls||''}">${v}</div></div>`}
+
+  function tab(t){
+    document.querySelectorAll('.tabs .tab').forEach(x=>x.classList.remove('on'));
+    const screens={home:'s-home',entry:'s-entry',reports:'s-reports',settings:'s-settings'};
+    show(screens[t]);
+    const idx=['home','entry','reports','settings'].indexOf(t);
+    document.querySelectorAll('.tabs .tab')[idx].classList.add('on');
+    if(t==='home') renderHome();
+    if(t==='entry') renderStudents();
+    if(t==='settings') renderProfile();
+  }
+  function repMode(mode,el){
+    document.querySelectorAll('#s-reports .pill').forEach(p=>p.classList.remove('on')); el.classList.add('on');
+    const d=document.getElementById('repDate');
+    const cw=document.getElementById('repClassWrap');
+    const sw=document.getElementById('repStudentWrap');
+    const lbl=document.getElementById('repField').querySelector('label');
+    d.style.display=''; cw.style.display='none'; sw.style.display='none';
+    if(mode==='weekly'){ lbl.textContent='Week Starting'; d.value='2026-08-09'; if(role==='admin')cw.style.display=''; }
+    else if(mode==='monthly'){ lbl.textContent='Month'; d.value='2026-08'; if(role==='admin')cw.style.display=''; }
+    else if(mode==='daily'){ lbl.textContent='Date'; d.value='2026-08-09'; if(role==='admin')cw.style.display=''; }
+    else if(mode==='student'){
+      lbl.textContent='Date';
+      if(role==='admin'){ d.style.display='none'; sw.style.display='none'; cw.style.display='';
+        document.getElementById('repField').querySelector('label').textContent='1. Class';
+        document.getElementById('repField').querySelector('input').style.display='none'; }
+      else { d.style.display='none'; cw.style.display='none'; sw.style.display=''; }
+    }
+    else if(mode==='teachers'){
+      d.style.display='none'; cw.style.display='none'; sw.style.display='none';
+      document.getElementById('repField').querySelector('label').textContent='Per-teacher entry completion & punctuality — filtered by class, teacher and date range';
+    }
+    const rs=document.getElementById('repScope'); if(rs) rs.textContent = mode==='student' ? '(M. Ismail)' : (mode==='monthly' ? '(Aug 2026)' : mode==='weekly' ? '(week of 9 Aug)' : mode==='teachers' ? '(all teachers)' : '(10B)');
+  }
+  function genReport(){
+    // Native population: fetch from the site, render summary + records below.
+    const mode = document.querySelector('#s-reports .pill.on').textContent;
+    const scope = (document.getElementById('repScope')||{}).textContent || '(7B)';
+    const host = document.getElementById('repResult');
+    const titles = { 'Daily':'Daily Report — 9 Aug 2026', 'Weekly':'Weekly Report — 9 Aug to 15 Aug 2026',
+      'Monthly':'Monthly Report — Aug 2026', 'Student-wise':'Student Report — M. Ismail' };
+    if (mode === 'Teacher-wise') {
+      host.innerHTML = renderAuditTable();
+      return;
+    }
+    const title = (titles[mode] || 'Daily Report — 9 Aug 2026') + ' <span style="font-weight:400;color:var(--muted);font-size:12px">' + scope + '</span>';
+    const bars = [['Uniform',92,'var(--success)'],['Shoes',85,'var(--success)'],['Socks',78,'var(--warning)'],['Haircut',64,'var(--warning)'],['Nails',71,'var(--warning)'],['Bag',88,'var(--success)']]
+      .map(b=>`<div class="bar"><span class="lbl">${b[0]}</span><div class="track"><div class="fill" style="width:${b[1]}%;background:${b[2]}"></div></div><span class="pct">${b[1]}%</span></div>`).join('');
+    const rows = [['09 Aug','2539','M. Haider','✓✓✓✓✓✓'],['09 Aug','2570','Usman Aftab','✓✓✓✗✓✓'],['09 Aug','2573','Shahzeb Chand','✓✓✓✓✓✓'],['09 Aug','2574','IBRAR AHMED','✓✗✓✓✗✓']]
+      .map(r=>{ const checks=r[3].split('').map(c=>`<span style="color:${c==='✓'?'var(--compliant)':'var(--danger)'}">${c}</span>`).join('');
+        return `<div class="row" style="padding:9px 4px"><span style="width:50px;font-size:11px;color:var(--muted)">${r[0]}</span><span style="width:44px;font-size:11.5px;font-weight:600">${r[1]}</span><div class="c" style="min-width:0"><b style="font-size:13px">${r[2]}</b></div>${checks}</div>`; }).join('');
+    host.innerHTML = `<div class="rep"><div class="rt">${title}</div>${bars}</div>
+      <div class="rep" style="padding:8px 14px">
+        <div class="row" style="padding:8px 4px;cursor:default">
+          <span style="width:50px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase">Date</span>
+          <span style="width:44px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase">Roll</span>
+          <div class="c"><span style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase">Name</span></div>
+          <span style="font-size:10px;font-weight:600;color:var(--muted)">U Sh So H N B</span>
+        </div>${rows}</div>`;
+  }
+  function renderAuditTable(){
+    const rows=[['09 Aug','7B','4335','M. Ali','zeeshan','On time'],['09 Aug','7B','4327','Abdul Hannan','zeeshan','On time'],['09 Aug','7B','4321','M. Sheryar Bjar','zeeshan','1 day late'],['09 Aug','7B','4259','M. Umar','zeeshan','On time']]
+      .map(r=>{ const late=/late/i.test(r[5]);
+        return `<div class="row" style="padding:9px 4px"><span style="width:64px;font-size:11px;color:var(--muted)">${r[0]}</span><span style="width:40px;font-size:11.5px;font-weight:600">${r[2]}</span><div class="c" style="min-width:0"><b style="font-size:13px">${r[3]}</b><span>${r[1]} · ${r[4]}</span></div><span class="chip ${late?'late':'done'}">${r[5]}</span></div>`; }).join('');
+    return `<div class="rep"><div class="rt">Teacher-wise · 2 Aug → 9 Aug <span style="font-weight:400;color:var(--muted);font-size:12px">(25 records · 4 late)</span></div></div>
+      <div class="rep" style="padding:8px 14px">
+        <div class="row" style="padding:8px 4px;cursor:default">
+          <span style="width:64px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase">Date</span>
+          <span style="width:40px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase">Roll</span>
+          <div class="c"><span style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase">Student</span></div>
+          <span style="font-size:10px;font-weight:600;color:var(--muted)">Status</span>
+        </div>${rows}</div>`;
+  }
+
+  /* ----- entry ----- */
+  let entryDate = new Date(); let entryState = [];
+  function chipState(el){
+    if(el.classList.contains('compliant')){el.classList.remove('compliant');el.classList.add('non')}
+    else if(el.classList.contains('non')){el.classList.remove('non');el.classList.add('compliant')}
+    else el.classList.add('compliant');
+    updateProgress();
+  }
+  function renderStudents(){
+    const list = document.getElementById('entryList');
+    entryState = STUDENTS.map(()=>Array(CHIPS.length).fill(0));
+    list.innerHTML = STUDENTS.map((s,si)=>`
+      <div class="scard">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1"><div class="roll">${s[0]}</div><div class="nm">${s[1]}</div></div>
+          <button class="wabtn addnum" style="min-height:30px;padding:0 10px;font-size:11px" onclick="openWaModal('${s[0]}','${s[1]}')">📞 Number</button>
+        </div>
+        <div class="chips">
+          ${CHIPS.map((c,ci)=>`<button class="tchip" onclick="chipState(this)"><span class="dot"></span><span class="i">${c[0]}</span>${c[1]}</button>`).join('')}
+        </div>
+        <input class="rmk" placeholder="Add remarks…">
+      </div>`).join('');
+    // demo pre-mark: 1978 shoes ✗ · 2105 bag ✗ · 2153 haircut+nails ✗ (the rest compliant)
+    const cards=[...list.querySelectorAll('.scard')];
+    cards.forEach(c=>[...c.querySelectorAll('.tchip')].forEach(ch=>ch.classList.add('compliant')));
+    [[0,1],[1,5],[2,3],[2,4]].forEach(([ci,chi])=>{cards[ci].querySelectorAll('.tchip')[chi].classList.remove('compliant');cards[ci].querySelectorAll('.tchip')[chi].classList.add('non')});
+    updateProgress();
+  }
+  function markAll(){
+    document.querySelectorAll('#entryList .tchip').forEach(c=>{c.classList.remove('non');c.classList.add('compliant')});
+    updateProgress();
+  }
+  function updateProgress(){
+    const cards=[...document.querySelectorAll('#entryList .scard')];
+    let marked=0;
+    cards.forEach(c=>{const on=[...c.querySelectorAll('.tchip')].some(t=>t.classList.contains('compliant')||t.classList.contains('non')); if(on)marked++});
+    const total=cards.length;
+    document.getElementById('progTxt').textContent=marked+' of '+total+' marked';
+    document.getElementById('progFill').style.width=(total?Math.round(marked/total*100):0)+'%';
+  }
+  function shiftDate(d){
+    entryDate.setDate(entryDate.getDate()+d);
+    const lbl=entryDate.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    const today=new Date();
+    const isToday=entryDate.toDateString()===today.toDateString();
+    document.getElementById('dateVal').textContent=(isToday?'Today, ':'')+lbl;
+    document.getElementById('lateBar').style.display = entryDate<today ? 'flex' : 'none';
+  }
+  function saved(){
+    updateProgress();
+    const cards=[...document.querySelectorAll('#entryList .scard')];
+    const rows=[];
+    cards.forEach((c,si)=>{
+      const failed=[];
+      [...c.querySelectorAll('.tchip')].forEach((ch,ci)=>{ if(!ch.classList.contains('compliant')) failed.push(CHIPS[ci][1]); });
+      if(failed.length) rows.push({roll:STUDENTS[si][0],name:STUDENTS[si][1],failed});
+    });
+    if(rows.length){
+      buildNotify(rows);
+      show('s-notify');
+      toast('Saved — '+rows.length+' student(s) need parent notification.');
+    } else {
+      toast('Saved — all students compliant. ✓');
+    }
+  }
+  function renderProfile(){
+    const admin = role==='admin';
+    document.getElementById('pAv').textContent=(admin?'A':'a').toUpperCase();
+    document.getElementById('pName').textContent=admin?'admin':'amina';
+    document.getElementById('pRole').textContent=(admin?'Administrator':'Teacher')+' · Class '+(admin?'ALL':'3B');
+    document.getElementById('pStats').innerHTML =
+      st('Assigned Class',admin?'ALL':'3B') +
+      st('Late Warnings',admin?'2':'1', (admin?'2':'1')!=='0'?'red':'') +
+      (admin? st('Late Rate','8%') : st('Deadline','9:30 AM')) +
+      st('Account',admin?'Admin':'Teacher');
+  }
+
+  /* ----- notify parents / whatsapp ----- */
+  const WA_NUMBERS={'1978':'+92 300 1234567','2153':'+923001112233'};
+  let notifyState=[]; let notifyOrder=[]; let notifyPos=-1; let waTarget=null;
+  function buildNotify(rows){
+    notifyState=rows.map(r=>({roll:r.roll,name:r.name,failed:r.failed,
+      number:WA_NUMBERS[r.roll]||'',sendable:!!WA_NUMBERS[r.roll],sent:false,selected:!!WA_NUMBERS[r.roll]}));
+    notifyPos=-1; notifyOrder=[];
+    renderNotify();
+  }
+  function renderNotify(){
+    const sendable=notifyState.filter(r=>r.sendable);
+    const greyed=notifyState.filter(r=>!r.sendable);
+    const sel=sendable.filter(r=>r.selected).length;
+    const allSel=sendable.length>0&&sendable.every(r=>r.selected);
+    document.getElementById('notifySub').textContent='9 Aug 2026 · Class 10B · '+sendable.length+' with number';
+    let html='';
+    if(sendable.length) html+=`<div class="selectall" onclick="toggleAllNotify()"><span class="chk ${allSel?'on':''}">✓</span>Select all (${sendable.length})</div>`;
+    html+=sendable.map(r=>`
+      <div class="nrow" style="opacity:${r.sent?0.65:1}">
+        <span class="chk ${r.selected?'on':''}" onclick="toggleNotify('${r.roll}')">✓</span>
+        <div class="nb">
+          <b>${r.name}</b><span class="rl">Roll ${r.roll} · ${r.number}</span>
+          <div class="ntags">${r.failed.map(f=>`<span class="ntag">${f}</span>`).join('')}</div>
+        </div>
+        ${r.sent?`<span class="sentline">✔ Sent</span>`:`<button class="wabtn" onclick="waSend('${r.roll}')">💬 Send</button>`}
+      </div>`).join('');
+    if(greyed.length){
+      html+=`<div style="font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--faint);padding:10px 2px 8px">No WhatsApp number on file</div>`;
+      html+=greyed.map(r=>`
+        <div class="nrow greyed">
+          <span class="chk off">✓</span>
+          <div class="nb">
+            <b>${r.name}</b><span class="rl">Roll ${r.roll} · no number on file</span>
+            <div class="ntags">${r.failed.map(f=>`<span class="ntag grey">${f}</span>`).join('')}</div>
+          </div>
+          <button class="wabtn addnum" onclick="openWaModal('${r.roll}','${r.name}')">＋ Number</button>
+        </div>`).join('');
+    }
+    document.getElementById('notifyList').innerHTML=html;
+    const bar=document.getElementById('notifyBatchBtn');
+    bar.innerHTML=notifyPos>=0
+      ? '⏳ Sending '+(notifyPos+1)+' of '+notifyOrder.length+' — tap Send in WhatsApp, then come back'
+      : '💬 Send to selected ('+sel+')';
+  }
+  function toggleNotify(roll){ notifyState=notifyState.map(r=>r.roll===roll?{...r,selected:!r.selected}:r); renderNotify(); }
+  function toggleAllNotify(){ const s=notifyState.filter(r=>r.sendable); const all=s.every(r=>r.selected); notifyState=notifyState.map(r=>r.sendable?{...r,selected:!all}:r); renderNotify(); }
+  function waSend(roll){ notifyState=notifyState.map(r=>r.roll===roll?{...r,sent:true}:r); renderNotify(); toast('Opened WhatsApp for '+roll+' — message pre-filled. Tap Send inside WhatsApp.'); }
+  function notifyBatch(){
+    if(notifyPos>=0){ // simulated return-from-WhatsApp: mark current sent, advance
+      const cur=notifyOrder[notifyPos];
+      notifyState=notifyState.map(r=>r.roll===cur.roll?{...r,sent:true}:r);
+      notifyPos++;
+      if(notifyPos>=notifyOrder.length){ notifyPos=-1; notifyOrder=[]; renderNotify(); toast('Queue complete — all messages opened.'); return; }
+      renderNotify(); nextChat();
+      return;
+    }
+    notifyOrder=notifyState.filter(r=>r.sendable&&r.selected);
+    if(!notifyOrder.length){ toast('Select at least one student.'); return; }
+    notifyPos=0; nextChat();
+  }
+  function nextChat(){ const r=notifyOrder[notifyPos]; toast('Opened WhatsApp for '+r.name+' — tap Send, then come back to continue.'); renderNotify(); }
+  function openWaModal(roll,name){
+    waTarget={roll,name};
+    document.getElementById('waModalSub').innerHTML='For <b>'+name+'</b> · Roll '+roll;
+    document.getElementById('waInput').value=WA_NUMBERS[roll]||'';
+    document.getElementById('waModal').classList.add('open');
+  }
+  function closeWaModal(){ document.getElementById('waModal').classList.remove('open'); waTarget=null; }
+  function saveWa(){
+    if(!waTarget) return;
+    const n=normNum(document.getElementById('waInput').value);
+    if(!n){ toast('Enter a valid number (e.g. 03001234567).'); return; }
+    const savedName=waTarget.name, savedRoll=waTarget.roll;
+    WA_NUMBERS[savedRoll]=n;
+    closeWaModal();
+    toast('Number saved for '+savedName+'.');
+    notifyState=notifyState.map(r=>r.roll===savedRoll?{...r,number:n,sendable:true,selected:true}:r);
+    if(document.getElementById('s-notify').classList.contains('active')) renderNotify();
+  }
+  function normNum(raw){
+    let d=String(raw||'').replace(/[^\d+]/g,'');
+    if(!d) return '';
+    if(d.startsWith('+')){ d=d.replace(/\+/g,''); if(!/^\d{8,15}$/.test(d)) return ''; return '+'+d; }
+    if(d.length===10&&d.startsWith('0')) return '+92'+d.slice(1);
+    if(d.length===11&&d.startsWith('0')) return '+92'+d.slice(1);
+    if((d.length===12||d.length===13)&&d.startsWith('92')) return '+'+d;
+    if(/^\d{8,15}$/.test(d)) return '+'+d;
+    return '';
+  }
+
+  /* ----- manage mockups ----- */
+  const MCLASSES=['10B','10G','3B','3G','3R','4B','4G','4R','4Y','5B','5G','5R','6B','6G','6R','7B','7G','7R','8B','8G','9B','9G','9Y'];
+  const MSTUDENTS=[['1978','M. Abdullah Waheed','10B'],['2105','M. Ismail','10B'],['2153','M. Zain Ul Abideen','10B'],
+    ['2156','Abdullah Rasheed','10B'],['2186','Khizer Abbas','10B'],['2426','M. Abdullah Adnan','10B']];
+  const MTEACHERS=[['SK','Sarah Jenkins','ADMIN','Grade 10 - Mathematics'],['DC','David Chen','TEACHER','Grade 8 - Science'],
+    ['AM','Aisha Malik','TEACHER','Grade 9 - English']];
+  function renderManageStudents(){
+    document.getElementById('stuChips').innerHTML='<span class="mchip on">All Classes</span>'+MCLASSES.map(c=>`<span class="mchip">Class ${c}</span>`).join('');
+    document.getElementById('stuList').innerHTML=MSTUDENTS.map(s=>`
+      <div class="mcard"><div style="flex:1"><div class="meta">#${s[0]} • CLASS ${s[2]}</div><div class="nm">${s[1]}</div></div>
+      <div class="acts"><i title="Edit" onclick="openWaModal('${s[0]}','${s[1]}')">✏️</i><i class="del" title="Delete">🗑️</i></div></div>`).join('');
+    document.getElementById('stuPage').textContent='Page 1 of 32';
+  }
+  function renderManageTeachers(){
+    document.getElementById('tchList').innerHTML=MTEACHERS.map(t=>`
+      <div class="mcard"><div class="tav">${t[0]}</div>
+      <div style="flex:1"><div class="trow"><span class="nm" style="font-size:15px;font-weight:600">${t[1]}</span>
+      <span class="tbadge ${t[2]==='ADMIN'?'admin':''}">${t[2]}</span></div>
+      <div class="meta" style="margin-top:2px">🎓 ${t[3]}</div></div>
+      <div class="acts"><i class="del">🗑️</i></div></div>`).join('');
+  }
+  function changeDeadline(){
+    const card=document.getElementById('dlCard');
+    const existing=card.querySelector('.dl-edit');
+    if(existing){ existing.remove(); card.querySelector('.dl-btn').style.display=''; return }
+    const wrap=card.querySelector('div:nth-child(2)');
+    const edit=document.createElement('div');
+    edit.className='dl-edit';
+    edit.innerHTML='<input id="dlInput" value="09:30"><button class="dl-btn" onclick="saveDeadline()">Save</button>';
+    wrap.appendChild(edit);
+    card.querySelector('.dl-btn').style.display='none';
+  }
+  function saveDeadline(){
+    const v=document.getElementById('dlInput').value.trim();
+    if(!/^\d{1,2}:\d{2}$/.test(v)){ toast('Enter time as HH:MM (e.g. 09:30).'); return; }
+    const [h,m]=v.split(':').map(Number);
+    const ap=h>=12?'PM':'AM'; const hh=h%12===0?12:h%12;
+    document.getElementById('dlVal').textContent=hh+':'+String(m).padStart(2,'0')+' '+ap;
+    toast('Deadline updated to '+hh+':'+String(m).padStart(2,'0')+' '+ap+'.');
+    changeDeadline();
+  }
+  function showWithTabs(id){ show(id) }
+  document.addEventListener('DOMContentLoaded',()=>{});
+  // hook: manage screens render on first open
+  const _show = show;
+  window.show = function(id){
+    _show(id);
+    if(id==='s-manage-students') renderManageStudents();
+    if(id==='s-manage-teachers') renderManageTeachers();
+    if(id==='s-settings') renderProfile();
+  };
+  renderManageStudents(); renderManageTeachers();
+
+  setRole(role);
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Environment secrets — NEVER commit .env (contains real keys)
+.env
+.env.local
+.env.*.local
+
+# Native build outputs & signing secrets
+android/
+ios/
+*.apk
+*.aab
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+google-services.json
+GoogleService-Info.plist
+
+# Logs & OS
+*.log
+npm-debug.*
+.DS_Store
+
+# IDE / tooling
+.idea/
+.vscode/
+.freebuff/
+
+# Dev scratch files
+structure.txt

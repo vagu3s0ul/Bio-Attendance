@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONT, RADIUS, SHADOW, SPACING } from '@/constants/theme';
 
 /**
- * Shared building blocks for the 2026 SPS Attendance UI refresh:
+ * Shared building blocks for the 2026 Bio Attendance UI refresh:
  * pastel icon wells, pill badges, bento stat tiles, portal grids and
  * section headers — the language used across every mockup.
  */

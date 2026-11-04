@@ -135,7 +135,7 @@ export default function ProfileScreen() {
         <Card style={styles.section}>
           <Text style={[styles.sectionTitle, LABEL_CAPS]}>About</Text>
           <Text style={styles.aboutText}>
-            SPS Attendance — a dedicated Android app for the Sialkot Public School &amp; College
+            Bio Attendance — a dedicated Android app for the Sialkot Public School &amp; College
             "Daily Student Checking System". Native app talking to the school site's own
             JSON API.
           </Text>

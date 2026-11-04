@@ -27,7 +27,7 @@ export default function AppBar({
       </View>
       <View style={styles.titles}>
         <Text style={styles.title} numberOfLines={1}>
-          SPS Attendance
+          Bio Attendance
         </Text>
         <Text style={styles.sub} numberOfLines={1}>
           Sialkot Campus

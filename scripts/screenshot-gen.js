@@ -63,7 +63,7 @@ const screens = {
     title: '',
     content: `<rect x="52" y="180" width="176" height="176" rx="88" fill="#EBF1FD"/>
   <text x="140" y="266" font-size="40" font-weight="700" fill="${BLUE}" text-anchor="middle">S</text>
-  <text x="140" y="292" font-size="16" font-weight="700" fill="${INK}" text-anchor="middle">SPSC Attendance</text>
+  <text x="140" y="292" font-size="16" font-weight="700" fill="${INK}" text-anchor="middle">Bio Attendance</text>
   <text x="140" y="308" font-size="8.5" fill="${MUT}" text-anchor="middle">Sialkot Public School &amp; College</text>
   <rect x="50" y="392" width="180" height="34" rx="10" fill="#FFFFFF" stroke="${LINE}"/>
   <text x="62" y="414" font-size="9.5" fill="#1A1A1B">admin@school</text>
@@ -155,7 +155,7 @@ const screens = {
   ${card(32, 402, 216, 40)}<text x="80" y="426" font-size="11" font-weight="600" fill="${INK}">Attendance Deadline</text><text x="240" y="427" font-size="13" fill="${MUT}" text-anchor="end">›</text>
   ${card(32, 456, 216, 40)}<text x="80" y="480" font-size="11" font-weight="600" fill="${INK}">WhatsApp Number</text><text x="240" y="481" font-size="11" font-weight="600" fill="${BLUE}" text-anchor="end">+92…</text>
   ${btn(32, 510, 216, 38, '#FDECEA', 12)}<text x="140" y="534" font-size="10.5" font-weight="600" fill="#E74C3C" text-anchor="middle">Log Out</text>
-  <text x="140" y="566" font-size="7.5" fill="#A0A0A0" text-anchor="middle">SPS Attendance v1.3.1</text>`,
+  <text x="140" y="566" font-size="7.5" fill="#A0A0A0" text-anchor="middle">Bio Attendance v1.3.1</text>`,
   },
   manage: {
     title: 'Manage', active: 'More',

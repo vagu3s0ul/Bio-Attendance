@@ -1,5 +1,5 @@
 /**
- * SPS Attendance — Material Design 3 (Material You) design system.
+ * Bio Attendance — Material Design 3 (Material You) design system.
  * Light mode only. Cool-light canvas (#F5F7FA), white cards, Deep Royal Blue
  * (#1E4DB7) primary brand anchor, and an unambiguous status palette
  * (Present green / Absent red / Leave amber) for rapid field scanning.

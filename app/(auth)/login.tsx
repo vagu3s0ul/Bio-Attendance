@@ -158,7 +158,7 @@ export default function LoginScreen() {
             <Text style={styles.officialText}>OFFICIAL PORTAL</Text>
           </View>
 
-          <Text style={styles.brand}>SPS Attendance</Text>
+          <Text style={styles.brand}>Bio Attendance</Text>
           <Text style={styles.brandSub}>Sialkot Campus Portal</Text>
 
           {/* Role selector */}
@@ -316,7 +316,7 @@ export default function LoginScreen() {
           <View style={styles.notice}>
             <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
             <Text style={styles.noticeText}>
-              SPS Attendance is synchronizing with the central Sialkot registrar database. Late
+              Bio Attendance is synchronizing with the central Sialkot registrar database. Late
               attendance marks require administrative sign-off.
             </Text>
           </View>

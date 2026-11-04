@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="assets/icon.png" alt="SPS Attendance" width="110"/>
+<img src="assets/icon.png" alt="Bio Attendance" width="110"/>
 
-# SPS Attendance — Android App
+# Bio Attendance — Android App
 
 **A native Android companion for the *Daily Student Checking System* of Sialkot Public School & College.**
 
@@ -120,7 +120,7 @@ still work unchanged for browsers, and both surfaces share `config.php` and the 
 
 ```mermaid
 flowchart LR
-    subgraph APP["SPS Attendance — React Native app"]
+    subgraph APP["Bio Attendance — React Native app"]
         UI["Expo Router screens<br/>login · home · entry · reports · manage"]
         SVC["services layer<br/>http · api · domain · whatsapp"]
         SEC["SecureStore<br/>API token · user · WhatsApp numbers"]
@@ -149,7 +149,7 @@ the remaining browser pages (CSV export) keep the same session.
 sequenceDiagram
     autonumber
     participant U as Teacher / Admin
-    participant A as SPS Attendance (app)
+    participant A as Bio Attendance (app)
     participant S as PHP site
     U->>A: Enter username & password
     A->>S: POST api.php?r=auth/login
@@ -338,7 +338,7 @@ default** (cleartext enabled via `expo-build-properties` in `app.json`).
 | "The face model could not be loaded" | The APK was built without the model — rebuild (`./gradlew assembleRelease`), the 5.2 MB `tflite` must be in the bundle |
 | Face check always says "not recognised" | Enroll again in better light, then tune `face_match_threshold` (lower = more lenient) |
 | Absent students were not created | Tick **Save + absent** on the finish dialog; the server only adds records for students with no entry yet |
-| Camera permission denied | Android Settings → Apps → SPS Attendance → Permissions → Camera → Allow |
+| Camera permission denied | Android Settings → Apps → Bio Attendance → Permissions → Camera → Allow |
 
 ## License
 

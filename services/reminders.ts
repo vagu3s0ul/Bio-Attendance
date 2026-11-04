@@ -115,7 +115,7 @@ export async function scheduleReminder(input: ScheduleInput): Promise<ScheduledR
   const granted = await ensureNotificationPermission();
   if (!granted) {
     throw new Error(
-      'Notifications are turned off for SPS Attendance. Allow them in Android settings to schedule reminders.'
+      'Notifications are turned off for Bio Attendance. Allow them in Android settings to schedule reminders.'
     );
   }
 

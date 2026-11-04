@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "SPS Attendance",
+    "name": "Bio Attendance",
     "slug": "sps-attendance",
     "version": "1.3.1",
     "orientation": "portrait",
@@ -45,7 +45,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "SPS Attendance uses the camera to recognise students for face attendance.",
+          "cameraPermission": "Bio Attendance uses the camera to recognise students for face attendance.",
           "recordAudioAndroid": false
         }
       ],

@@ -684,7 +684,7 @@ export default function DefaultersScreen() {
           </View>
           <View style={styles.titles}>
             <Text style={styles.title} numberOfLines={1}>
-              SPS Attendance{' '}
+              Bio Attendance{' '}
               <Text style={styles.titleDot}>•</Text>{' '}
               <Text style={styles.titleSection}>Dashboard</Text>
             </Text>

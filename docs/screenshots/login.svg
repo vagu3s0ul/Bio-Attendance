@@ -17,7 +17,7 @@
   <!-- content -->
   <rect x="52" y="180" width="176" height="176" rx="88" fill="#EBF1FD"/>
   <text x="140" y="266" font-size="40" font-weight="700" fill="#2D6CDF" text-anchor="middle">S</text>
-  <text x="140" y="292" font-size="16" font-weight="700" fill="#1A1A1B" text-anchor="middle">SPSC Attendance</text>
+  <text x="140" y="292" font-size="16" font-weight="700" fill="#1A1A1B" text-anchor="middle">Bio Attendance</text>
   <text x="140" y="308" font-size="8.5" fill="#717172" text-anchor="middle">Sialkot Public School &amp; College</text>
   <rect x="50" y="392" width="180" height="34" rx="10" fill="#FFFFFF" stroke="#F0F0F0"/>
   <text x="62" y="414" font-size="9.5" fill="#1A1A1B">admin@school</text>

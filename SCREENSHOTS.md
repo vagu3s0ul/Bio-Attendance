@@ -1,6 +1,6 @@
-# 📱 SPS Attendance — Screenshot Gallery
+# 📱 Bio Attendance — Screenshot Gallery
 
-**SPS Attendance** is a native Android companion for the school's *Daily Student Checking System*
+**Bio Attendance** is a native Android companion for the school's *Daily Student Checking System*
 (`attendance.spscsialkot.com`). Same session, same data, zero server changes — every screen below
 talks to the existing PHP API.
 

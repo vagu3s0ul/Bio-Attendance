@@ -1,4 +1,4 @@
-/** Domain types for the SPS Attendance app. */
+/** Domain types for the Bio Attendance app. */
 
 export type Role = 'admin' | 'teacher' | 'accountant' | 'principal' | 'section_head';
 

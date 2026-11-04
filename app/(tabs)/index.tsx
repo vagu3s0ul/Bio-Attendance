@@ -1,142 +1,25 @@
 import React, { useCallback, useState } from 'react';
 import {
   Alert,
-  Modal,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { Redirect, useFocusEffect, useRouter } from 'expo-router';
 import Screen from '@/components/Screen';
 import Card from '@/components/Card';
-import StatCard from '@/components/StatCard';
-import ActionCard from '@/components/ActionCard';
-import { COLORS, FONT, LABEL_CAPS, RADIUS, SPACING } from '@/constants/theme';
-import { fetchHome, updateDeadline } from '@/services/api';
+import AppBar from '@/components/AppBar';
+import AdminHome from '@/components/home/AdminHome';
+import TeacherHome from '@/components/home/TeacherHome';
+import AccountantHome from '@/components/home/AccountantHome';
+import PrincipalHome from '@/components/home/PrincipalHome';
+import SectionHeadHome from '@/components/home/SectionHeadHome';
+import { COLORS, FONT, RADIUS, SPACING } from '@/constants/theme';
+import { fetchHome } from '@/services/api';
 import { useSession } from '@/store/session';
 import { HomeData, SessionExpiredError } from '@/types';
-
-/** "09:30 AM" → "09:30" (24h) for the deadline input. */
-function to24h(time: string): string {
-  const m = time.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
-  if (!m) return time.trim();
-  let h = parseInt(m[1], 10);
-  const mm = m[2];
-  if (/pm/i.test(m[3] || '') && h < 12) h += 12;
-  if (/am/i.test(m[3] || '') && h === 12) h = 0;
-  return `${String(h).padStart(2, '0')}:${mm}`;
-}
-
-function DeadlineBanner({ text }: { text: string }) {
-  return (
-    <View style={styles.deadline}>
-      <Ionicons name="warning" size={18} color="#B28200" />
-      <Text style={styles.deadlineText}>
-        Entries close at <Text style={styles.deadlineStrong}>{text || '09:30 AM'}</Text> · 1st Period
-      </Text>
-    </View>
-  );
-}
-
-/** Admin attendance-deadline card (design: label + value + Change). */
-function DeadlineCard({
-  value,
-  onChanged,
-}: {
-  value: string;
-  onChanged: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [time, setTime] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  const openModal = () => {
-    setTime(to24h(value));
-    setErr(null);
-    setOpen(true);
-  };
-
-  const save = async () => {
-    if (!/^\d{1,2}:\d{2}$/.test(time.trim())) {
-      setErr('Enter time as HH:MM (24-hour), e.g. 09:30.');
-      return;
-    }
-    setBusy(true);
-    try {
-      const res = await updateDeadline(time.trim());
-      if (res.ok) {
-        setOpen(false);
-        onChanged();
-      } else {
-        setErr(res.message);
-      }
-    } catch (e: any) {
-      setErr(e?.message || 'Could not update the deadline.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <>
-      <View style={styles.deadlineCard}>
-        <View style={styles.deadlineCardIcon}>
-          <Ionicons name="time" size={20} color={COLORS.primary} />
-        </View>
-        <View style={styles.deadlineCardText}>
-          <Text style={[styles.deadlineCardLabel, LABEL_CAPS]}>Attendance Deadline</Text>
-          <Text style={styles.deadlineCardValue}>{value || '09:30 AM'}</Text>
-        </View>
-        <Pressable
-          style={({ pressed }) => [styles.changeBtn, pressed && styles.pressedBtn]}
-          onPress={openModal}
-        >
-          <Text style={styles.changeBtnText}>Change</Text>
-        </Pressable>
-      </View>
-
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Attendance Deadline</Text>
-            <Text style={styles.modalSub}>
-              Entries saved after this time are marked LATE.
-            </Text>
-            <TextInput
-              style={styles.modalInput}
-              value={time}
-              onChangeText={setTime}
-              placeholder="09:30"
-              placeholderTextColor={COLORS.textFaint}
-              keyboardType="numbers-and-punctuation"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {err ? <Text style={styles.modalErr}>{err}</Text> : null}
-            <View style={styles.modalActions}>
-              <Pressable style={styles.modalCancel} onPress={() => setOpen(false)}>
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [styles.modalSave, pressed && styles.pressedBtn, busy && styles.saveBtnBusy]}
-                onPress={save}
-                disabled={busy}
-              >
-                <Text style={styles.modalSaveText}>{busy ? 'Saving…' : 'Save'}</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    </>
-  );
-}
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -145,21 +28,15 @@ function greeting(): string {
   return 'Good evening';
 }
 
-function shortDate(): string {
-  return new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
 export default function HomeScreen() {
   const router = useRouter();
   const { user, signOut } = useSession();
   const [data, setData] = useState<HomeData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(
     async (asRefresh = false) => {
       if (asRefresh) setRefreshing(true);
-      else setLoading(true);
       try {
         setData(await fetchHome());
       } catch (e: any) {
@@ -173,7 +50,6 @@ export default function HomeScreen() {
           Alert.alert("Couldn't refresh", e?.message || 'Check your connection.');
         }
       } finally {
-        setLoading(false);
         setRefreshing(false);
       }
     },
@@ -191,196 +67,137 @@ export default function HomeScreen() {
   // Prefer the role the server just served (fetchHome self-corrects on
   // server-side role changes) over the session snapshot.
   const role = data ? data.role : user.role;
-  const classes = data && 'classes' in data ? data.classes : [];
-  const roleLabel = role === 'admin' ? 'Administrator' : 'Teacher';
+  const roleLabel =
+    role === 'admin'
+      ? 'Administrator'
+      : role === 'accountant'
+      ? 'Accountant'
+      : role === 'principal'
+      ? 'Principal'
+      : role === 'section_head'
+      ? 'Section Head'
+      : 'Teacher';
   const isAdmin = role === 'admin';
 
-  const teacherProgress =
-    data?.role === 'teacher'
-      ? data.stats.total > 0
-        ? Math.round((data.stats.entered / data.stats.total) * 100)
-        : 0
-      : 0;
-  const teacherDone = data?.role === 'teacher' && data.stats.total > 0 && data.stats.entered >= data.stats.total;
+  // Admin control room (new UI)
+  if (isAdmin && data?.role === 'admin') {
+    return (
+      <Screen>
+        <AppBar />
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => load(true)}
+              tintColor={COLORS.primary}
+            />
+          }
+        >
+          <AdminHome stats={data.stats} classes={data.classes} onReload={() => load(true)} />
+        </ScrollView>
+      </Screen>
+    );
+  }
+
+  // Teacher desk (new UI)
+  if (data?.role === 'teacher') {
+    return (
+      <Screen>
+        <AppBar />
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => load(true)}
+              tintColor={COLORS.primary}
+            />
+          }
+        >
+          <TeacherHome stats={data.stats} onSync={() => load(true)} />
+        </ScrollView>
+      </Screen>
+    );
+  }
+
+  // Accounts desk (new UI)
+  if (data?.role === 'accountant') {
+    return (
+      <Screen>
+        <AppBar />
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => load(true)}
+              tintColor={COLORS.primary}
+            />
+          }
+        >
+          <AccountantHome
+            students={data.stats.students}
+            deadline={data.stats.deadline}
+            classes={data.classes || []}
+            onSync={() => load(true)}
+          />
+        </ScrollView>
+      </Screen>
+    );
+  }
+
+  // Principal / Section Head (new UI)
+  if (role === 'principal' || role === 'section_head') {
+    return (
+      <Screen>
+        <AppBar />
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => load(true)}
+              tintColor={COLORS.primary}
+            />
+          }
+        >
+          {role === 'principal' ? (
+            <PrincipalHome
+              stats={data && data.role === 'principal' ? data.stats : undefined}
+              classes={data && data.role === 'principal' ? data.classes : undefined}
+              onSync={() => load(true)}
+            />
+          ) : (
+            <SectionHeadHome
+              stats={data && data.role === 'section_head' ? data.stats : undefined}
+              classes={data && data.role === 'section_head' ? data.classes : undefined}
+              onSync={() => load(true)}
+            />
+          )}
+        </ScrollView>
+      </Screen>
+    );
+  }
 
   return (
-    <Screen edges={[]}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={COLORS.primary} />
-        }
-      >
-        <View style={styles.greeting}>
-          <Text style={styles.greetingTitle} numberOfLines={1}>
+    <Screen>
+      <AppBar />
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <Card style={styles.statusCard}>
+          <Text style={styles.statusTitle}>
             {greeting()}, {user.username} · {roleLabel}
           </Text>
-          <Text style={styles.greetingSub}>Welcome back. Here is your overview for today.</Text>
-        </View>
-
-        {data ? <DeadlineBanner text={data.stats.deadline} /> : null}
-
-        <View style={styles.statsGrid}>
-          {data?.role === 'admin' ? (
-            <>
-              <StatCard label="Teachers" value={data.stats.teachers} />
-              <StatCard label="Students" value={data.stats.students} />
-              <StatCard label="Classes" value={data.stats.classes} />
-              <StatCard label="Today's Entries" value={data.stats.todayEntries} accent />
-            </>
-          ) : data?.role === 'teacher' ? (
-            <>
-              <StatCard label="Total Students" value={data.stats.totalStudents} />
-              <StatCard
-                label="Today's Entries"
-                value={`${data.stats.entered}/${data.stats.total}`}
-                valueColor={data.stats.entered > 0 ? COLORS.text : COLORS.danger}
-                accent
-              />
-              <StatCard label="Days This Month" value={data.stats.daysThisMonth} />
-              <StatCard label="Date" value={shortDate()} />
-            </>
-          ) : (
-            <>
-              <StatCard label="Total Students" value={loading ? '—' : 0} />
-              <StatCard label="Today's Entries" value={loading ? '—' : '0/0'} accent />
-              <StatCard label="Days This Month" value={loading ? '—' : 0} />
-              <StatCard label="Date" value={shortDate()} />
-            </>
-          )}
-        </View>
-
-        {/* Quick actions — role-scoped */}
-        <Text style={[styles.sectionTitle, LABEL_CAPS]}>Quick Actions</Text>
-        <View style={styles.actions}>
-          <ActionCard
-            icon="create-outline"
-            title="Daily Entry"
-            subtitle="Mark attendance and uniform"
-            filled
-            onPress={() => router.push('/(tabs)/entry')}
-          />
-          <ActionCard
-            icon="analytics-outline"
-            title="View Reports"
-            subtitle="Daily, weekly, monthly & student-wise"
-            onPress={() => router.push('/(tabs)/reports')}
-          />
-          {isAdmin ? (
-            <>
-              <ActionCard
-                icon="eye-outline"
-                title="Audit Trail"
-                subtitle="Secret entry timestamps & late detection"
-                onPress={() => router.push('/web/audit')}
-              />
-              <ActionCard
-                icon="people-outline"
-                title="Manage"
-                subtitle="Teachers, students & CSV upload"
-                onPress={() => router.push('/manage')}
-              />
-            </>
-          ) : null}
-          <ActionCard
-            icon="download-outline"
-            title="Export Data"
-            subtitle="Download records as CSV"
-            onPress={() => router.push('/web/export')}
-          />
-        </View>
-
-        {/* Admin: attendance deadline */}
-        {isAdmin && data ? (
-          <DeadlineCard
-            value={data.stats.deadline}
-            onChanged={() => load(true)}
-          />
-        ) : null}
-
-        {/* Status */}
-        {!isAdmin ? (
-          <Card style={styles.statusCard}>
-            <View style={styles.statusIcon}>
-              <Ionicons name="time-outline" size={22} color={COLORS.textMuted} />
-            </View>
-            <Text style={styles.statusTitle}>
-              {teacherDone
-                ? "Today's entry complete"
-                : data?.role === 'teacher' && data.stats.entered > 0
-                ? `Today's entry in progress`
-                : "Today's entry not yet started"}
-            </Text>
-            <Text style={styles.statusBody}>
-              {teacherDone
-                ? 'Great work — all checks recorded for today.'
-                : data?.role === 'teacher' && data.stats.entered > 0
-                ? `${data.stats.entered} of ${data.stats.total} students marked (${teacherProgress}%).`
-                : 'Complete your daily checks for your class.'}
-            </Text>
-            <Pressable
-              style={({ pressed }) => [styles.statusBtn, pressed && styles.pressedBtn]}
-              onPress={() => router.push('/(tabs)/entry')}
-            >
-              <Text style={styles.statusBtnText}>
-                {teacherDone ? 'View Entry' : 'Start Now'}
-              </Text>
-            </Pressable>
-          </Card>
-        ) : null}
-
-        {isAdmin && classes.length > 0 ? (
-          <>
-            <Text style={[styles.sectionTitle, LABEL_CAPS]}>Today's Entry Status</Text>
-            <Card style={styles.classList}>
-              {classes.map((c, i) => (
-                <Pressable
-                  key={`${c.className}-${i}`}
-                  style={({ pressed }) => [styles.classRow, i > 0 && styles.classRowBorder, pressed && styles.pressed]}
-                  onPress={() =>
-                    router.push({ pathname: '/web/[page]', params: { page: 'reports' } })
-                  }
-                >
-                  <View style={styles.classNameWrap}>
-                    <Text style={styles.className}>{c.className}</Text>
-                    <Text style={styles.classTeacher} numberOfLines={1}>
-                      {c.teacher}
-                    </Text>
-                  </View>
-                  <View style={styles.classCounts}>
-                    <Text style={styles.classCount}>
-                      {c.entered}/{c.students} entered
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.statusChip,
-                      c.status === 'Done'
-                        ? styles.statusDone
-                        : c.status === 'Not Done'
-                        ? styles.statusNotDone
-                        : styles.statusLate,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusText,
-                        c.status === 'Done'
-                          ? styles.statusTextDone
-                          : c.status === 'Not Done'
-                          ? styles.statusTextNotDone
-                          : styles.statusTextLate,
-                      ]}
-                    >
-                      {c.status}
-                    </Text>
-                  </View>
-                </Pressable>
-              ))}
-            </Card>
-          </>
-        ) : null}
+          <Text style={styles.statusBody}>Loading your desk…</Text>
+        </Card>
       </ScrollView>
     </Screen>
   );
@@ -391,9 +208,9 @@ const styles = StyleSheet.create({
   content: { padding: SPACING.lg, paddingBottom: 40, gap: SPACING.lg },
   greeting: { gap: 2 },
   greetingTitle: {
-    fontSize: 22,
-    fontFamily: FONT.display,
-    fontWeight: '300',
+    fontSize: 24,
+    fontFamily: FONT.medium,
+    fontWeight: '600',
     color: COLORS.text,
     letterSpacing: -0.3,
   },
@@ -461,14 +278,14 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 18, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
   modalSub: { fontSize: 13, color: COLORS.textMuted, fontFamily: FONT.regular, lineHeight: 18 },
   modalInput: {
-    height: 44,
+    height: 48,
     borderWidth: 1,
     borderColor: COLORS.outline,
     borderRadius: RADIUS.md,
     paddingHorizontal: 14,
     fontSize: 15,
     color: COLORS.text,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.surfaceLow,
     fontFamily: FONT.regular,
     marginTop: 6,
   },
@@ -476,7 +293,7 @@ const styles = StyleSheet.create({
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 10 },
   modalCancel: {
     flex: 1,
-    height: 44,
+    height: 48,
     borderRadius: RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.outline,
@@ -486,7 +303,7 @@ const styles = StyleSheet.create({
   modalCancelText: { color: COLORS.text, fontSize: 14, fontFamily: FONT.medium, fontWeight: '600' },
   modalSave: {
     flex: 1,
-    height: 44,
+    height: 48,
     borderRadius: RADIUS.md,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
@@ -521,7 +338,7 @@ const styles = StyleSheet.create({
   statusBtn: {
     marginTop: 8,
     alignSelf: 'stretch',
-    height: 44,
+    height: 48,
     backgroundColor: COLORS.primary,
     borderRadius: RADIUS.md,
     alignItems: 'center',
@@ -538,7 +355,7 @@ const styles = StyleSheet.create({
   classCounts: { marginRight: 10 },
   classCount: { fontSize: 12, color: COLORS.textMuted, fontWeight: '600', fontFamily: FONT.regular },
   statusChip: { borderRadius: RADIUS.sm, paddingHorizontal: 9, paddingVertical: 4 },
-  statusDone: { backgroundColor: '#E9F7EF' },
+  statusDone: { backgroundColor: COLORS.successSoft },
   statusNotDone: { backgroundColor: COLORS.dangerSoft },
   statusLate: { backgroundColor: COLORS.warningBg },
   statusText: { fontSize: 11, fontWeight: '600', fontFamily: FONT.medium },

@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AdminOnly from '@/components/AdminOnly';
 import Screen from '@/components/Screen';
+import AppBar from '@/components/AppBar';
 import Card from '@/components/Card';
 import { COLORS, FONT, LABEL_CAPS, RADIUS, SPACING } from '@/constants/theme';
 import {
@@ -233,6 +234,7 @@ export default function ManageStudents() {
   return (
     <AdminOnly>
     <Screen edges={[]}>
+      <AppBar />
       {/* Search */}
       <View style={styles.searchWrap}>
         <View style={styles.searchBar}>
@@ -260,7 +262,7 @@ export default function ManageStudents() {
 
       {/* Class chips */}
       <View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={styles.chips}>
           <Pressable
             style={[styles.chip, !filterClass && styles.chipOn]}
             onPress={() => { setFilterClass(''); setPage(1); }}
@@ -366,7 +368,7 @@ export default function ManageStudents() {
 }
 
 const styles = StyleSheet.create({
-  searchWrap: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md },
+  searchWrap: { paddingHorizontal: SPACING.lg, paddingTop: 0, paddingBottom: SPACING.sm },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -380,8 +382,9 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, fontSize: 14, color: COLORS.text, fontFamily: FONT.regular, height: '100%' },
   chips: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, gap: 8 },
+  chipScroll: { flexGrow: 0 },
   chip: {
-    minHeight: 34,
+    height: 32,
     paddingHorizontal: 14,
     borderRadius: 999,
     borderWidth: 1,

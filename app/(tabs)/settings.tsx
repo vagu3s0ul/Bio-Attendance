@@ -9,8 +9,10 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import Screen from '@/components/Screen';
+import AppBar from '@/components/AppBar';
 import Card from '@/components/Card';
 import StatCard from '@/components/StatCard';
 import { COLORS, FONT, LABEL_CAPS, RADIUS, SPACING } from '@/constants/theme';
@@ -71,11 +73,23 @@ export default function ProfileScreen() {
 
   // Prefer the freshly-fetched profile role (reflects server-side role changes).
   const isAdmin = profile ? profile.role === 'admin' : user?.role === 'admin';
+  const role = profile?.role || user?.role || 'teacher';
+  const roleLabel =
+    role === 'admin'
+      ? 'Administrator'
+      : role === 'accountant'
+      ? 'Accountant'
+      : role === 'principal'
+      ? 'Principal'
+      : role === 'section_head'
+      ? 'Section Head'
+      : 'Teacher';
   const name = profile?.name || user?.name || user?.username || 'User';
   const initial = name.charAt(0).toUpperCase();
 
   return (
     <Screen edges={[]}>
+      <AppBar showBell={false} />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
@@ -90,7 +104,7 @@ export default function ProfileScreen() {
           </View>
           <Text style={styles.profileName}>{name}</Text>
           <Text style={styles.profileRole}>
-            {isAdmin ? 'Administrator' : 'Teacher'} · Class {profile?.className || '—'}
+            {roleLabel} · Class {profile?.className || '—'}
           </Text>
           <Pressable
             style={({ pressed }) => [styles.logoutBtn, pressed && styles.pressedBtn]}
@@ -115,17 +129,19 @@ export default function ProfileScreen() {
           ) : (
             <StatCard label="Deadline" value={profile?.deadline || '09:30 AM'} />
           )}
-          <StatCard label="Account" value={isAdmin ? 'Admin' : 'Teacher'} />
+          <StatCard label="Account" value={roleLabel} />
         </View>
 
         <Card style={styles.section}>
           <Text style={[styles.sectionTitle, LABEL_CAPS]}>About</Text>
           <Text style={styles.aboutText}>
             SPS Attendance — a dedicated Android app for the Sialkot Public School &amp; College
-            "Daily Student Checking System". Native shell with the school's web pages embedded for
-            full fidelity.
+            "Daily Student Checking System". Native app talking to the school site's own
+            JSON API.
           </Text>
-          <Text style={styles.version}>Version 1.0.0</Text>
+          <Text style={styles.version}>
+            Version {Constants.expoConfig?.version ?? '1.3.0'}
+          </Text>
         </Card>
       </ScrollView>
     </Screen>
@@ -134,30 +150,36 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
-  content: { padding: SPACING.lg, paddingBottom: 40, gap: SPACING.lg },
+  content: { padding: SPACING.lg, paddingTop: 0, paddingBottom: 40, gap: SPACING.lg },
   profileCard: {
     alignItems: 'center',
     backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.xl,
     padding: SPACING.xl,
     gap: 4,
   },
   profileAvatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: COLORS.surfaceHigh,
+    width: 76,
+    height: 76,
+    borderRadius: 24,
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   profileAvatarText: {
-    fontSize: 28,
-    fontFamily: FONT.medium,
-    fontWeight: '600',
-    color: COLORS.primary,
+    fontSize: 30,
+    fontFamily: FONT.bold,
+    fontWeight: '700',
+    color: '#fff',
   },
-  profileName: { fontSize: 20, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
+  profileName: {
+    fontSize: 21,
+    fontFamily: FONT.bold,
+    fontWeight: '700',
+    color: COLORS.text,
+    letterSpacing: -0.4,
+  },
   profileRole: { fontSize: 13, color: COLORS.textMuted, fontFamily: FONT.regular, textAlign: 'center' },
   logoutBtn: {
     flexDirection: 'row',
@@ -165,7 +187,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     marginTop: 14,
-    minHeight: 44,
+    minHeight: 48,
     paddingHorizontal: 24,
     borderRadius: RADIUS.md,
     borderWidth: 1,

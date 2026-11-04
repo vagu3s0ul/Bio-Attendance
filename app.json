@@ -2,7 +2,7 @@
   "expo": {
     "name": "SPS Attendance",
     "slug": "sps-attendance",
-    "version": "1.0.0",
+    "version": "1.3.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "cover",
-      "backgroundColor": "#FAFAFA"
+      "backgroundColor": "#F5F7FA"
     },
 
     "assetBundlePatterns": ["**/*"],
@@ -22,9 +22,10 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FAFAFA"
+        "backgroundColor": "#F5F7FA"
       },
-      "package": "com.sps.attendance"
+      "package": "com.sps.attendance",
+      "versionCode": 5
     },
 
     "web": {
@@ -41,15 +42,23 @@
           }
         }
       ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "SPS Attendance uses the camera to recognise students for face attendance.",
+          "recordAudioAndroid": false
+        }
+      ],
       "expo-secure-store",
       "./plugins/withWhatsApp",
+      "./plugins/withExpoCameraMaven",
       [
         "expo-splash-screen",
         {
           "image": "./assets/splash.png",
           "imageWidth": 1284,
           "resizeMode": "cover",
-          "backgroundColor": "#FAFAFA"
+          "backgroundColor": "#F5F7FA"
         }
       ]
     ],

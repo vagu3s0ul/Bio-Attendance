@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AdminOnly from '@/components/AdminOnly';
 import Screen from '@/components/Screen';
+import AppBar from '@/components/AppBar';
 import Card from '@/components/Card';
 import { COLORS, FONT, LABEL_CAPS, RADIUS, SPACING } from '@/constants/theme';
 import { addTeacher, deleteTeacher, fetchManagePage } from '@/services/api';
@@ -222,6 +223,7 @@ export default function ManageTeachers() {
   return (
     <AdminOnly>
     <Screen edges={[]}>
+      <AppBar />
       <View style={styles.addWrap}>
         <Pressable
           style={({ pressed }) => [styles.addBtn, pressed && styles.pressed]}
@@ -300,8 +302,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    height: 44,
-    borderRadius: RADIUS.md,
+    height: 50,
+    borderRadius: 14,
     backgroundColor: COLORS.primary,
   },
   addText: { color: '#fff', fontSize: 13, fontFamily: FONT.medium, fontWeight: '600', letterSpacing: 0.4 },

@@ -3,8 +3,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { COLORS, FONT, LABEL_CAPS, RADIUS, SHADOW } from '@/constants/theme';
 
 /**
- * Bento stat tile from the teacher dashboard design:
- * label-caps micro-label on top, large light display number below.
+ * Bento stat tile: label-caps micro-label on top, bold headline number below
+ * (headline-lg per the M3 scale).
  */
 export default function StatCard({
   label,
@@ -47,5 +47,5 @@ const styles = StyleSheet.create({
     ...SHADOW.card,
   },
   label: { color: COLORS.textMuted },
-  value: { fontSize: 30, fontFamily: FONT.display, lineHeight: 38, letterSpacing: -0.5 },
+  value: { fontSize: 30, fontFamily: FONT.bold, fontWeight: '700', lineHeight: 38, letterSpacing: -0.5 },
 });

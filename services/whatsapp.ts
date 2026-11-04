@@ -9,6 +9,7 @@
  */
 import * as SecureStore from 'expo-secure-store';
 import { Linking, Platform } from 'react-native';
+import { apiGet } from './http';
 
 // ---------------------------------------------------------------------------
 // Storage (per-class JSON maps — SecureStore values must stay < ~2KB)
@@ -20,14 +21,35 @@ function mapKey(className: string): string {
   return `wa_map_${className.trim().replace(/[^a-zA-Z0-9._-]/g, '')}`;
 }
 
-/** Load the { roll -> number } map for a class (rolls are strings). */
+/**
+ * Load the { roll -> number } map for a class (rolls are strings).
+ * The site's student records are the source of truth; on-device numbers
+ * (entered when offline) override them. Falls back to the local map when the
+ * server is unreachable.
+ */
 export async function getWhatsappMap(className: string): Promise<Record<string, string>> {
+  const server: Record<string, string> = {};
+  try {
+    const list = await apiGet<Array<{ roll: string; whatsapp?: string }>>(
+      'reports/students',
+      { class: className }
+    );
+    for (const s of list) {
+      const n = normalizeNumber(s.whatsapp || '');
+      if (n) server[s.roll] = n;
+    }
+  } catch {
+    // offline or older server — fall back to the local map
+  }
+
+  let local: Record<string, string> = {};
   try {
     const raw = await SecureStore.getItemAsync(mapKey(className));
-    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    local = raw ? (JSON.parse(raw) as Record<string, string>) : {};
   } catch {
-    return {};
+    local = {};
   }
+  return { ...server, ...local };
 }
 
 /** Get a single student's number ('' when not on file). */

@@ -1,10 +1,9 @@
 /**
  * Native Reports screen.
  *
- * Every filter mode fetches the real PHP report page (reports.php for
- * teachers — session-scoped to their class — and admin_reports.php for
- * admins) over the stored session cookie, PARSES the table, and renders it
- * natively below the filters. No browser/WebView is shown.
+ * Every filter mode asks api.php for the report JSON (teachers are scoped to
+ * their own class server-side, admins get any class) and renders it natively
+ * below the filters. No browser/WebView is shown.
  *
  * Role rules (from the implementation spec + the live site):
  *  - Teacher: daily / weekly / monthly / student-wise, own class only. The
@@ -29,6 +28,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect } from 'expo-router';
 import Screen from '@/components/Screen';
+import AppBar from '@/components/AppBar';
 import Card from '@/components/Card';
 import { COLORS, FONT, LABEL_CAPS, RADIUS, SPACING } from '@/constants/theme';
 import {
@@ -45,7 +45,7 @@ import {
   ReportResult,
   summarizeReport,
   todayISO,
-} from '@/services/extract';
+} from '@/services/domain';
 import { ReportStudent, SessionExpiredError } from '@/types';
 
 type Mode = ReportType | 'teachers'; // 'teachers' = admin-only teacher-wise view
@@ -297,6 +297,7 @@ export default function ReportsScreen() {
 
   return (
     <Screen edges={[]}>
+      <AppBar />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Mode chips */}
         <View style={styles.chips}>
@@ -355,6 +356,7 @@ export default function ReportsScreen() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                style={styles.classChipsScroll}
                 contentContainerStyle={styles.classChips}
               >
                 <Pressable
@@ -390,6 +392,7 @@ export default function ReportsScreen() {
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
+                    style={styles.classChipsScroll}
                     contentContainerStyle={styles.classChips}
                   >
                     {classes.map((c) => (
@@ -474,6 +477,7 @@ export default function ReportsScreen() {
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
+                  style={styles.classChipsScroll}
                   contentContainerStyle={styles.classChips}
                 >
                   <Pressable
@@ -504,6 +508,7 @@ export default function ReportsScreen() {
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
+                  style={styles.classChipsScroll}
                   contentContainerStyle={styles.classChips}
                 >
                   <Pressable
@@ -873,30 +878,26 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    minHeight: 34,
-    paddingHorizontal: 13,
+    gap: 6,
+    height: 32,
+    paddingHorizontal: 14,
     borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: COLORS.outline,
     backgroundColor: COLORS.surface,
   },
-  chipOn: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  chipOn: { backgroundColor: COLORS.primary },
   chipText: { fontSize: 12.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.textMuted },
   chipTextOn: { color: '#fff' },
-  filterCard: { gap: SPACING.md, padding: 16 },
+  filterCard: { gap: SPACING.md, padding: 14, borderRadius: 20 },
   field: { gap: 6 },
   fieldLabel: { color: COLORS.textMuted },
   required: { color: COLORS.danger },
   input: {
-    height: 44,
-    borderWidth: 1,
-    borderColor: COLORS.outline,
-    borderRadius: RADIUS.md,
+    height: 52,
+    borderRadius: 14,
     paddingHorizontal: 14,
-    fontSize: 14,
+    fontSize: 14.5,
     color: COLORS.text,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.field,
     fontFamily: FONT.regular,
   },
   pickerInput: {
@@ -907,8 +908,9 @@ const styles = StyleSheet.create({
   pickerText: { color: COLORS.text, fontSize: 14, fontFamily: FONT.regular, flex: 1 },
   pickerPlaceholder: { color: COLORS.textFaint, fontSize: 14, fontFamily: FONT.regular, flex: 1 },
   classChips: { gap: 8, paddingVertical: 2 },
+  classChipsScroll: { flexGrow: 0 },
   classChip: {
-    minHeight: 32,
+    height: 32,
     paddingHorizontal: 13,
     borderRadius: RADIUS.full,
     borderWidth: 1,
@@ -930,7 +932,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 7,
-    height: 46,
+    height: 48,
     borderRadius: RADIUS.md,
     backgroundColor: COLORS.primary,
     marginTop: 2,

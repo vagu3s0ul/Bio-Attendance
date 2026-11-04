@@ -13,6 +13,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
 import AdminOnly from '@/components/AdminOnly';
 import Screen from '@/components/Screen';
+import AppBar from '@/components/AppBar';
 import ActionCard from '@/components/ActionCard';
 import Card from '@/components/Card';
 import { COLORS, FONT, LABEL_CAPS, RADIUS, SPACING } from '@/constants/theme';
@@ -55,6 +56,7 @@ export default function ManageHub() {
   return (
     <AdminOnly>
     <Screen edges={[]} style={styles.screen}>
+      <AppBar />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <View style={styles.head}>
           <Text style={styles.title}>Teachers &amp; Students</Text>
@@ -115,7 +117,13 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: SPACING.lg, paddingBottom: 40, gap: SPACING.lg },
   head: { gap: 2 },
-  title: { fontSize: 22, fontFamily: FONT.display, fontWeight: '300', color: COLORS.text, letterSpacing: -0.3 },
+  title: {
+    fontSize: 21,
+    fontFamily: FONT.bold,
+    fontWeight: '700',
+    color: COLORS.text,
+    letterSpacing: -0.4,
+  },
   sub: { fontSize: 14, color: COLORS.textMuted, fontFamily: FONT.regular, marginTop: 2 },
   sec: { color: COLORS.textMuted, marginTop: 2 },
   actions: { gap: SPACING.md },

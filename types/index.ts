@@ -1,6 +1,6 @@
 /** Domain types for the SPS Attendance app. */
 
-export type Role = 'admin' | 'teacher';
+export type Role = 'admin' | 'teacher' | 'accountant' | 'principal' | 'section_head';
 
 export interface SessionUser {
   username: string;
@@ -37,7 +37,10 @@ export interface TeacherStats {
 
 export type HomeData =
   | { role: 'admin'; stats: AdminStats; classes: ClassStatus[] }
-  | { role: 'teacher'; stats: TeacherStats };
+  | { role: 'accountant'; stats: { students: number; deadline: string }; classes: string[] }
+  | { role: 'teacher'; stats: TeacherStats }
+  | { role: 'principal'; stats: AdminStats; classes: ClassStatus[] }
+  | { role: 'section_head'; stats: AdminStats; classes: ClassStatus[] };
 
 export class SessionExpiredError extends Error {
   constructor() {
@@ -46,14 +49,18 @@ export class SessionExpiredError extends Error {
   }
 }
 
-// Parsers in services/extract.ts own these shapes; re-exported here so screens
-// can import domain types from a single place.
+// services/domain.ts owns these shapes; re-exported here so screens can import
+// domain types from a single place.
 export type {
+  AuditRecord,
   AuditStats,
+  EntryFormData,
   ManagePage,
   ManageResult,
   ManageStudent,
   ManageTeacher,
   ProfileData,
+  ReportResult,
+  ReportRow,
   ReportStudent,
-} from '@/services/extract';
+} from '@/services/domain';

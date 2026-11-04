@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="280" height="660" viewBox="0 0 280 660" font-family="Inter, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <!-- phone frame -->
+  <rect x="6" y="6" width="268" height="648" rx="42" fill="#111111"/>
+  <rect x="10" y="10" width="260" height="640" rx="38" fill="#20242C"/>
+  <rect x="14" y="14" width="252" height="636" rx="32" fill="#FAFAFA"/>
+  <!-- status bar -->
+  <text x="34" y="38" font-size="11" font-weight="600" fill="#1A1A1B">9:41</text>
+  <circle cx="230" cy="34" r="1.8" fill="#1A1A1B" opacity="0.8"/>
+  <circle cx="238" cy="34" r="1.8" fill="#1A1A1B" opacity="0.8"/>
+  <rect x="246" y="31.5" width="9" height="4" rx="2" fill="#1A1A1B" opacity="0.8"/>
+  <!-- header -->
+  <rect x="14" y="58" width="252" height="44" fill="#FFFFFF"/>
+  <line x1="14" y1="102" x2="266" y2="102" stroke="#EEEEEE"/>
+  <text x="32" y="86" font-size="14" font-weight="700" letter-spacing="0.5" fill="#2D6CDF">SPSC</text>
+  <circle cx="246" cy="80" r="13" fill="#E8E8E8"/>
+  <text x="246" y="85" font-size="9" font-weight="600" fill="#2D6CDF" text-anchor="middle">A</text>
+  <!-- content -->
+  <rect x="14" y="106" width="252" height="348" fill="#111318"/>
+  <rect x="52" y="196" width="176" height="176" rx="24" fill="rgba(52,209,126,0.14)" stroke="#1F9D63" stroke-width="3"/>
+  <circle cx="96" cy="238" r="20" fill="#2B2F38"/><path d="M 88 246 Q 96 232 104 246 Z" fill="#8A8F9A"/><circle cx="90" cy="230" r="2.5" fill="#DDE1E6"/><circle cx="102" cy="230" r="2.5" fill="#DDE1E6"/>
+  <text x="196" y="260" font-size="10" font-weight="600" fill="#34D17E" text-anchor="middle">✓ M. Haider</text>
+  <text x="196" y="274" font-size="7.5" fill="rgba(255,255,255,0.7)" text-anchor="middle">matched · 0.86</text>
+  <text x="140" y="382" font-size="8.5" fill="rgba(255,255,255,0.7)" text-anchor="middle">3 present · scanning…</text>
+  <text x="140" y="426" font-size="8" font-weight="600" letter-spacing="0.8" fill="#717172" text-anchor="middle">PRESENT</text>
+  <rect x="32" y="436" width="216" height="34" rx="12" fill="#FFFFFF"/>
+  <circle cx="56" cy="453" r="9" fill="#E9F7EF"/><text x="56" y="457" font-size="7" font-weight="600" fill="#006D37" text-anchor="middle">✓</text>
+  <text x="74" y="457" font-size="9" font-weight="500" fill="#1A1A1B">M. Haider</text>
+  <rect x="32" y="476" width="216" height="34" rx="12" fill="#FFFFFF"/>
+  <circle cx="56" cy="493" r="9" fill="#E9F7EF"/><text x="56" y="497" font-size="7" font-weight="600" fill="#006D37" text-anchor="middle">✓</text>
+  <text x="74" y="497" font-size="9" font-weight="500" fill="#1A1A1B">Usman Aftab</text>
+  <rect x="32" y="522" width="216" height="38" rx="12" fill="#2D6CDF"/><text x="140" y="546" font-size="10.5" font-weight="600" fill="#FFFFFF" text-anchor="middle">Finish &amp; Save</text>
+  <!-- bottom nav -->
+  <rect x="14" y="582" width="252" height="54" fill="#FFFFFF"/>
+  <line x1="14" y1="582" x2="266" y2="582" stroke="#EEEEEE"/>
+  <text x="39.2" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">Home</text>
+  <text x="89.6" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">Entry</text>
+  <text x="140" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">Reports</text>
+  <text x="190.4" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">Notices</text>
+  <rect x="214.8" y="590" width="52" height="32" rx="14" fill="#2D6CDF"/><text x="240.8" y="611" font-size="9" font-weight="600" fill="#FFFFFF" text-anchor="middle">More</text>
+</svg>

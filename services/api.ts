@@ -1,91 +1,93 @@
 /**
- * High-level API for the SPS attendance PHP site.
- * All calls reuse the stored PHP session cookie.
+ * High-level API for the SPS attendance site.
+ *
+ * Every call goes to the site's JSON API (api.php) with the bearer token
+ * issued at login. No HTML is fetched or parsed.
  */
-import { getBaseUrl, getUser, setUser } from './settings';
-import { httpGet, httpPostForm, httpPostMultipart } from './http';
+import { getBaseUrl, getToken, getUser, setToken, setUser } from './settings';
+import { ApiError, apiGet, apiPost, apiRequest } from './http';
 import {
   AuditFilterOptions,
   AuditRecord,
-  AuditStats,
   EntryFormData,
   EntrySaveResult,
-  extractTitle,
-  isLoginError,
-  isLoginPage,
   ManagePage,
   ManageResult,
-  parseAdminStats,
-  parseAuditFilters,
-  parseAuditRecords,
-  parseAuditStats,
-  parseClassStatus,
-  parseEntryForm,
-  parseEntrySaveResult,
-  parseManagePage,
-  parseManageResult,
-  parseProfileBasics,
-  parseReportClasses,
-  parseReportLateCount,
-  parseReportResult,
-  parseReportStudents,
-  parseTeacherStats,
   ProfileData,
   ReportResult,
+  ReportStudent,
   todayISO,
-} from './extract';
+} from './domain';
+import { HomeData, Role, SessionExpiredError, SessionUser } from '@/types';
 
 /**
- * Derive the user's role from the landing page the server actually returned.
- * The PHP app's session knows the real role (teachers.role); we read its
- * signals rather than guessing. Defaults to 'teacher' — NEVER 'admin' — so a
- * detection failure can't accidentally show admin UI to a teacher.
+ * Run a request, translating an expired/invalid token into SessionExpiredError
+ * so screens can send the user back to the login screen.
  */
-function detectRole(html: string, title: string): Role {
-  const t = title.toLowerCase();
-  if (/admin dashboard/i.test(t)) return 'admin';
-  const basics = parseProfileBasics(html);
-  if (basics.className === 'ALL' || /administrator/i.test(basics.name)) return 'admin';
-  return 'teacher';
+async function call<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 401) throw new SessionExpiredError();
+    throw e;
+  }
 }
-import { HomeData, ReportStudent, Role, SessionExpiredError, SessionUser } from '@/types';
 
 /**
- * Log in against index.php. Detects the user's role from the landing page
- * title ("Admin Dashboard" → admin, "Dashboard" → teacher).
+ * Log in against api.php. The server returns the user's real role
+ * (teachers.role) plus a bearer token, both of which we persist.
  */
 export async function login(username: string, password: string): Promise<SessionUser> {
-  const base = await getBaseUrl();
+  let res: {
+    token: string;
+    user: { username: string; name: string; role: Role; className: string };
+  };
 
-  // Touch the login page first so the server issues a PHPSESSID.
-  await httpGet('/index.php').catch(() => undefined);
-
-  const html = await httpPostForm('/index.php', { username, password });
-  if (isLoginError(html)) {
-    throw new Error('Invalid username or password');
+  try {
+    res = await apiRequest('auth/login', {
+      method: 'POST',
+      auth: false,
+      body: { username, password },
+    });
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 401) {
+      throw new Error('Invalid username or password');
+    }
+    throw e;
   }
 
-  const title = extractTitle(html);
-  if (isLoginPage(html) || !/dashboard/i.test(title)) {
+  if (!res || !res.token || !res.user) {
     throw new Error('Unexpected response from server. Check the server URL in Settings.');
   }
 
-  // Role comes from the page the server chose for THIS session (the site's
-  // session knows the real teachers.role). Read fresh per login; never reuse
-  // a cached value from a previous account.
-  const role: Role = detectRole(html, title);
-  const basics = parseProfileBasics(html);
-  const user: SessionUser = { username, name: basics.name || username, role };
+  await setToken(res.token);
+  const user: SessionUser = {
+    username: res.user.username,
+    name: res.user.name || res.user.username,
+    role:
+      res.user.role === 'admin'
+        ? 'admin'
+        : res.user.role === 'accountant'
+        ? 'accountant'
+        : res.user.role === 'principal'
+        ? 'principal'
+        : res.user.role === 'section_head'
+        ? 'section_head'
+        : 'teacher',
+  };
   await setUser(user);
   return user;
 }
 
 export async function logout(): Promise<void> {
-  try {
-    await httpGet('/logout.php');
-  } catch {
-    // server unreachable — still clear locally
+  if (await getToken()) {
+    try {
+      await apiPost('auth/logout');
+    } catch {
+      // server unreachable — still clear locally
+    }
   }
+  await setToken(null);
   await setUser(null);
 }
 
@@ -96,51 +98,201 @@ export async function currentRole(): Promise<Role | null> {
 }
 
 /**
- * Fetch + parse the role-appropriate dashboard for the native Home screen.
- * If the server now serves a different role's page than we have stored (e.g.
- * an admin flipped a user's role in the DB), re-derive and persist it.
+ * Fetch the role-appropriate dashboard for the native Home screen. If the
+ * server now reports a different role than we have stored (e.g. an admin
+ * changed the account), persist the fresh role.
  */
 export async function fetchHome(): Promise<HomeData> {
   const user = await getUser();
   if (!user) throw new SessionExpiredError();
 
-  let role = user.role;
-  let html = await httpGet(role === 'admin' ? '/admin_dashboard.php' : '/teacher_dashboard.php');
-  if (isLoginPage(html)) throw new SessionExpiredError();
+  const data = await call(() =>
+    apiGet<{ role: Role; stats: any; classes?: any[] }>('home')
+  );
 
-  const actual = detectRole(html, extractTitle(html));
-  if (actual !== role) {
-    // Role changed server-side — re-fetch the right page and persist.
-    role = actual;
-    await setUser({ ...user, role });
-    html = await httpGet(role === 'admin' ? '/admin_dashboard.php' : '/teacher_dashboard.php');
-    if (isLoginPage(html)) throw new SessionExpiredError();
+  if (data.role !== user.role) {
+    await setUser({ ...user, role: data.role });
   }
 
-  if (role === 'admin') {
-    return { role, stats: parseAdminStats(html), classes: parseClassStatus(html) };
+  // Every role gets its own HomeData variant — never coerce a non-teacher
+  // role to 'teacher' or the principal/section-head dashboards become dead code.
+  switch (data.role) {
+    case 'teacher':
+      return { role: 'teacher', stats: data.stats };
+    case 'admin':
+      return { role: 'admin', stats: data.stats, classes: data.classes || [] };
+    case 'accountant':
+      return { role: 'accountant', stats: data.stats, classes: data.classes || [] };
+    case 'principal':
+      return { role: 'principal', stats: data.stats, classes: data.classes || [] };
+    case 'section_head':
+      return { role: 'section_head', stats: data.stats, classes: data.classes || [] };
   }
-  return { role, stats: parseTeacherStats(html) };
+}
+
+/** A staff notice / message sent to this user. */
+export interface Notice {
+  id: number;
+  subject: string;
+  body: string;
+  from: string;
+  created_at: string;
+  read: boolean;
+}
+
+/** Fetch the notices visible to the current user. */
+export async function fetchNotices(): Promise<Notice[]> {
+  const data = await call(() => apiGet<{ notices: Notice[] }>('notices/list'));
+  return data.notices || [];
+}
+
+/** Mark a set of notice ids as read. */
+export async function markNoticesRead(ids: number[]): Promise<void> {
+  if (!ids.length) return;
+  await call(() => apiPost('notices/mark_read', { ids }));
 }
 
 /**
- * Fetch + parse the Daily Entry form for a given date (defaults to today).
- * The native entry screen renders this as design-faithful student cards and
- * submits the exact same checkbox field names back.
+ * Fetch the Daily Entry form for a given date (defaults to today): the
+ * students of the signed-in teacher's class plus their saved state.
  */
 export async function fetchEntry(date?: string): Promise<EntryFormData> {
-  const html = await httpGet(date ? `/entry.php?date=${date}` : '/entry.php');
-  if (isLoginPage(html)) throw new SessionExpiredError();
-  return parseEntryForm(html);
+  return call(() => apiGet<EntryFormData>('entry', { date }));
 }
 
-/** Submit the entry checklist back to the site (same fields a browser sends). */
-export async function submitEntry(
-  fields: Record<string, string>
+/**
+ * Submit the entry checklist.
+ *
+ * `fields` keeps the shape the screen builds (the site's original form field
+ * names): `record_date` plus `records[<roll>][<checkpoint>]` and
+ * `records[<roll>][remarks]`, with `is_absent` posted for every student. These
+ * are converted into the API's structured payload here, so the screen is
+ * unchanged.
+ */
+export async function submitEntry(fields: Record<string, string>): Promise<EntrySaveResult> {
+  const date = fields.record_date || fields.date || todayISO();
+  const records: Record<string, Record<string, string | number>> = {};
+
+  for (const [key, value] of Object.entries(fields)) {
+    const m = key.match(/^records\[([^\]]+)\]\[([^\]]+)\]$/);
+    if (!m) continue;
+    const [, roll, field] = m;
+    if (!records[roll]) records[roll] = {};
+    // Form values are strings: '0' is truthy in JS, so compare explicitly.
+    // Checkboxes post 'on'; attendance posts '1' (absent) or '0' (present).
+    records[roll][field] =
+      field === 'remarks' ? value : value === '1' || value === 'on' || value === 'true' ? 1 : 0;
+  }
+
+  // A record with no is_absent posted (older builds) means present.
+  for (const record of Object.values(records)) {
+    if (record.is_absent === undefined) record.is_absent = 0;
+  }
+
+  const res = await call(() =>
+    apiPost<{ ok?: boolean; message?: string }>('entry/save', { date, records })
+  );
+
+  return {
+    ok: res?.ok !== false,
+    message: res?.message || (res?.ok === false ? 'Could not save. Please try again.' : 'Entries saved successfully.'),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Face attendance
+// ---------------------------------------------------------------------------
+
+export interface FaceStudent {
+  roll: string;
+  name: string;
+  samples: number;
+  embeddings: number[][];
+  present: boolean;
+}
+
+export interface FaceRoster {
+  class: string;
+  date: string;
+  threshold: number;
+  total: number;
+  enrolled: number;
+  present: number;
+  students: FaceStudent[];
+}
+
+/** Roster + enrolled embeddings for a class (teacher: own class). */
+export async function fetchFaceRoster(q: { className?: string; date?: string } = {}): Promise<FaceRoster> {
+  return call(() => apiGet<FaceRoster>('face/roster', { class: q.className, date: q.date }));
+}
+
+/** Store up to five embeddings for one student (replaces earlier samples). */
+export async function enrollFaceStudent(q: {
+  className?: string;
+  roll: string;
+  embeddings: number[][];
+}): Promise<ManageResult & { samples?: number }> {
+  const res = await call(() =>
+    apiPost<{ ok?: boolean; message?: string; samples?: number }>('face/enroll', {
+      class: q.className,
+      roll: q.roll,
+      embeddings: q.embeddings,
+    })
+  );
+  return {
+    ok: res?.ok !== false,
+    message: res?.message || (res?.ok === false ? 'Could not save the face.' : 'Face saved.'),
+    samples: res?.samples,
+  };
+}
+
+/** Delete a student's enrolled face data. */
+export async function clearFaceStudent(q: { className?: string; roll: string }): Promise<ManageResult> {
+  const res = await call(() =>
+    apiPost<{ ok?: boolean; message?: string }>('face/clear', {
+      class: q.className,
+      roll: q.roll,
+    })
+  );
+  return {
+    ok: res?.ok !== false,
+    message: res?.message || (res?.ok === false ? 'Could not remove the face data.' : 'Face data removed.'),
+  };
+}
+
+/**
+ * Save a face-attendance session. Only recognised students are posted, so
+ * everyone else stays absent. The server creates a record when missing and,
+ * when a teacher already saved a full entry, only clears is_absent — the
+ * uniform checks and remarks are never overwritten.
+ */
+export async function saveFaceAttendance(
+  rolls: string[],
+  date = todayISO(),
+  className?: string,
+  markAbsent = false
 ): Promise<EntrySaveResult> {
-  const html = await httpPostForm('/entry.php', fields);
-  if (isLoginPage(html)) throw new SessionExpiredError();
-  return parseEntrySaveResult(html);
+  if (rolls.length === 0) {
+    return { ok: true, message: 'No students were detected, so nothing was saved.' };
+  }
+
+  const res = await call(() =>
+    apiPost<{ ok?: boolean; message?: string }>('face/mark', {
+      date,
+      rolls,
+      class: className,
+      mark_absent: markAbsent,
+    })
+  );
+
+  return {
+    ok: res?.ok !== false,
+    message:
+      res?.message ||
+      (res?.ok === false
+        ? 'Could not save the face attendance.'
+        : `Face attendance saved for ${rolls.length} student${rolls.length === 1 ? '' : 's'}.`),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -153,25 +305,27 @@ export interface ManageQuery {
   page?: number;
 }
 
-/** Fetch the manage page (optionally filtered) and parse teachers/students. */
+/** Fetch teachers/students (optionally filtered). */
 export async function fetchManagePage(q: ManageQuery = {}): Promise<ManagePage> {
-  const params = new URLSearchParams();
-  if (q.search) params.set('search', q.search);
-  if (q.filterClass) params.set('filter_class', q.filterClass);
-  if (q.page && q.page > 1) params.set('page', String(q.page));
-  const qs = params.toString();
-  const html = await httpGet('/manage.php' + (qs ? `?${qs}` : ''));
-  if (isLoginPage(html)) throw new SessionExpiredError();
-  return parseManagePage(html);
+  return call(() =>
+    apiGet<ManagePage>('manage', {
+      search: q.search,
+      filter_class: q.filterClass,
+      page: q.page && q.page > 1 ? q.page : undefined,
+    })
+  );
 }
 
-async function manageAction(fields: Record<string, string>): Promise<ManageResult> {
-  const html = await httpPostForm('/manage.php', fields);
-  if (isLoginPage(html)) throw new SessionExpiredError();
-  return parseManageResult(html);
+async function manageAction(body: Record<string, unknown>): Promise<ManageResult> {
+  const res = await call(() =>
+    apiPost<{ ok?: boolean; message?: string }>('manage/action', body)
+  );
+  return {
+    ok: res?.ok !== false,
+    message: res?.message || (res?.ok === false ? 'Action failed. Please try again.' : 'Done.'),
+  };
 }
 
-// NOTE: the PHP forms use `class` as the field name (not className).
 export function addTeacher(f: { username: string; password: string; name: string; className: string; role: string }): Promise<ManageResult> {
   return manageAction({ action: 'add_teacher', username: f.username, password: f.password, name: f.name, class: f.className, role: f.role });
 }
@@ -185,79 +339,72 @@ export function editStudent(f: { id: string; className: string; rollno: string; 
 }
 
 export function deleteTeacher(id: number): Promise<ManageResult> {
-  return manageAction({ action: 'delete_teacher', id: String(id) });
+  return manageAction({ action: 'delete_teacher', id });
 }
 
 export function deleteStudent(id: number): Promise<ManageResult> {
-  return manageAction({ action: 'delete_student', id: String(id) });
+  return manageAction({ action: 'delete_student', id });
 }
 
-/** Bulk-import students from a CSV (class, rollno, name) via manage.php. */
+/** Bulk-import students from a CSV (class, rollno, name). */
 export async function bulkUploadStudents(file: {
   uri: string;
   name: string;
   type: string;
 }): Promise<ManageResult> {
-  const html = await httpPostMultipart(
-    '/manage.php',
-    { action: 'bulk_upload' },
-    { field: 'csv_file', uri: file.uri, name: file.name, type: file.type }
+  const form = new FormData();
+  form.append('action', 'bulk_upload');
+  form.append('csv_file', {
+    uri: file.uri,
+    name: file.name,
+    type: file.type || 'text/csv',
+  } as any);
+
+  const res = await call(() =>
+    apiRequest<{ ok?: boolean; message?: string }>('manage/upload', {
+      method: 'POST',
+      form,
+      timeout: 60000,
+    })
   );
-  if (isLoginPage(html)) throw new SessionExpiredError();
-  return parseManageResult(html);
+  return {
+    ok: res?.ok !== false,
+    message: res?.message || (res?.ok === false ? 'Upload failed.' : 'Upload complete.'),
+  };
 }
 
 // ---------------------------------------------------------------------------
 // Deadline (admin only)
 // ---------------------------------------------------------------------------
 
-/** Update the daily attendance deadline on the admin dashboard. */
+/** Update the daily attendance deadline. */
 export async function updateDeadline(time: string): Promise<ManageResult> {
-  const html = await httpPostForm('/admin_dashboard.php', {
-    update_deadline: '1',
-    deadline: time,
-  });
-  if (isLoginPage(html)) throw new SessionExpiredError();
-  const fresh = parseManageResult(html);
-  if (/error|failed|invalid/i.test(fresh.message) && !fresh.ok) return fresh;
-  return { ok: true, message: `Deadline set to ${time}.` };
+  const res = await call(() =>
+    apiPost<{ ok?: boolean; message?: string; deadline?: string }>('settings/deadline', { deadline: time })
+  );
+  return {
+    ok: res?.ok !== false,
+    message: res?.message || `Deadline set to ${time}.`,
+  };
 }
 
 // ---------------------------------------------------------------------------
-// Reports (native filters drive the real PHP report pages)
+// Reports
 // ---------------------------------------------------------------------------
 
 export type ReportType = 'daily' | 'weekly' | 'monthly' | 'student';
 
-/** Admin: the class list shown in report filters (from admin_reports.php). */
+/** Admin: the class list shown in report filters (teacher: own class only). */
 export async function fetchReportClasses(): Promise<string[]> {
-  const html = await httpGet('/admin_reports.php');
-  if (isLoginPage(html)) throw new SessionExpiredError();
-  return parseReportClasses(html);
+  return call(() => apiGet<string[]>('reports/classes'));
 }
 
-/**
- * Students for the student-wise report.
- * Admin: two-step — pass a class to load only that class's students
- * (the site populates its dropdown only after a class is chosen).
- * Teacher: session-scoped — the page only ever lists their own class.
- */
+/** Students for the student-wise report (teacher: their own class). */
 export async function fetchReportStudents(className?: string): Promise<ReportStudent[]> {
-  const user = await getUser();
-  if (!user) throw new SessionExpiredError();
-  const path =
-    user.role === 'admin'
-      ? `/admin_reports.php?class=${encodeURIComponent(className || '')}&type=student`
-      : '/reports.php?type=student';
-  const html = await httpGet(path);
-  if (isLoginPage(html)) throw new SessionExpiredError();
-  return parseReportStudents(html);
+  return call(() => apiGet<ReportStudent[]>('reports/students', { class: className }));
 }
 
-/**
- * Fetch + parse a report page natively (no WebView). Role-aware page choice
- * (admin_reports.php vs reports.php), session cookie reused automatically.
- */
+/** Fetch a report with the native filters. */
 export async function fetchReport(f: {
   type: ReportType;
   date?: string; // daily / weekly (YYYY-MM-DD)
@@ -265,23 +412,21 @@ export async function fetchReport(f: {
   className?: string; // admin class filter ('' = all classes)
   studentId?: string; // student-wise
 }): Promise<ReportResult> {
-  const user = await getUser();
-  if (!user) throw new SessionExpiredError();
-  const q = new URLSearchParams();
-  q.set('type', f.type);
-  if (f.date) q.set(f.type === 'weekly' ? 'week' : 'date', f.date);
-  if (f.month) q.set('month', f.month);
-  if (f.studentId) q.set('student', f.studentId);
-  if (user.role === 'admin' && f.className) q.set('class', f.className);
-  const page = user.role === 'admin' ? '/admin_reports.php' : '/reports.php';
-  const html = await httpGet(page + '?' + q.toString());
-  if (isLoginPage(html)) throw new SessionExpiredError();
-  return parseReportResult(html);
+  return call(() =>
+    apiGet<ReportResult>('reports/run', {
+      type: f.type,
+      date: f.type === 'weekly' ? undefined : f.date,
+      week: f.type === 'weekly' ? f.date : undefined,
+      month: f.month,
+      class: f.className,
+      student: f.studentId,
+    })
+  );
 }
 
 /**
- * Fetch + parse the admin audit page (Teacher-wise report) with its native
- * filters (class / teacher / date range / on-time-or-late).
+ * Admin audit (Teacher-wise report) with its native filters
+ * (class / teacher / date range / on-time-or-late).
  */
 export async function fetchAuditPage(f?: {
   className?: string;
@@ -290,16 +435,15 @@ export async function fetchAuditPage(f?: {
   to?: string;
   filterType?: string;
 }): Promise<{ options: AuditFilterOptions; records: AuditRecord[] }> {
-  const q = new URLSearchParams();
-  if (f?.className) q.set('class', f.className);
-  if (f?.teacher) q.set('teacher', f.teacher);
-  if (f?.from) q.set('from', f.from);
-  if (f?.to) q.set('to', f.to);
-  if (f?.filterType) q.set('filter_type', f.filterType);
-  const qs = q.toString();
-  const html = await httpGet('/audit.php' + (qs ? '?' + qs : ''));
-  if (isLoginPage(html)) throw new SessionExpiredError();
-  return { options: parseAuditFilters(html), records: parseAuditRecords(html) };
+  return call(() =>
+    apiGet<{ options: AuditFilterOptions; records: AuditRecord[] }>('audit', {
+      class: f?.className,
+      teacher: f?.teacher,
+      from: f?.from,
+      to: f?.to,
+      filter_type: f?.filterType,
+    })
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -309,41 +453,7 @@ export async function fetchAuditPage(f?: {
 export async function fetchProfile(): Promise<ProfileData> {
   const user = await getUser();
   if (!user) throw new SessionExpiredError();
-  const role = user.role;
-  const dash = await httpGet(role === 'admin' ? '/admin_dashboard.php' : '/teacher_dashboard.php');
-  if (isLoginPage(dash)) throw new SessionExpiredError();
-  const basics = parseProfileBasics(dash);
-  const deadline =
-    (dash.match(/Current Deadline:\s*([^<]+)/i) || [])[1]?.trim() ||
-    (dash.match(/completed by\s+([^<]+?)\s*\(/i) || [])[1]?.trim() ||
-    '09:30 AM';
-
-  if (role === 'admin') {
-    const audit = await httpGet('/audit.php').catch(() => '');
-    const stats: AuditStats = audit ? parseAuditStats(audit) : { total: 0, onTime: 0, late: 0, lateRate: 0 };
-    return {
-      role,
-      name: basics.name || user.name || user.username,
-      className: basics.className || 'ALL',
-      lateWarnings: stats.late,
-      lateRate: stats.lateRate,
-      deadline,
-      hasLateData: true,
-    };
-  }
-
-  // Teacher: count late rows in their own class's daily report (best effort).
-  const report = await httpGet(`/reports.php?type=daily&date=${todayISO()}`).catch(() => '');
-  const late = report ? parseReportLateCount(report) : 0;
-  return {
-    role,
-    name: basics.name || user.name || user.username,
-    className: basics.className || '—',
-    lateWarnings: late,
-    lateRate: 0,
-    deadline,
-    hasLateData: true,
-  };
+  return call(() => apiGet<ProfileData>('profile'));
 }
 
 /** Resolve a page slug to a full URL for the WebView screens. */
@@ -357,6 +467,7 @@ export async function pageUri(slug: string): Promise<string> {
     export: role === 'admin' ? '/admin_export.php' : '/export.php',
     reports: role === 'admin' ? '/admin_reports.php' : '/reports.php',
     dashboard: role === 'admin' ? '/admin_dashboard.php' : '/teacher_dashboard.php',
+    staff_dashboard: '/staff_dashboard.php',
   };
   return base + (map[slug] || `/${slug}.php`);
 }

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="280" height="660" viewBox="0 0 280 660" font-family="Inter, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <!-- phone frame -->
+  <rect x="6" y="6" width="268" height="648" rx="42" fill="#111111"/>
+  <rect x="10" y="10" width="260" height="640" rx="38" fill="#20242C"/>
+  <rect x="14" y="14" width="252" height="636" rx="32" fill="#FAFAFA"/>
+  <!-- status bar -->
+  <text x="34" y="38" font-size="11" font-weight="600" fill="#1A1A1B">9:41</text>
+  <circle cx="230" cy="34" r="1.8" fill="#1A1A1B" opacity="0.8"/>
+  <circle cx="238" cy="34" r="1.8" fill="#1A1A1B" opacity="0.8"/>
+  <rect x="246" y="31.5" width="9" height="4" rx="2" fill="#1A1A1B" opacity="0.8"/>
+  <!-- header -->
+  <rect x="14" y="58" width="252" height="44" fill="#FFFFFF"/>
+  <line x1="14" y1="102" x2="266" y2="102" stroke="#EEEEEE"/>
+  <text x="32" y="86" font-size="14" font-weight="700" letter-spacing="0.5" fill="#2D6CDF">SPSC</text>
+  <circle cx="246" cy="80" r="13" fill="#E8E8E8"/>
+  <text x="246" y="85" font-size="9" font-weight="600" fill="#2D6CDF" text-anchor="middle">A</text>
+  <!-- content -->
+  <rect x="32" y="120" width="216" height="8" rx="4" fill="#E8E8E8"/><rect x="32" y="120" width="162" height="8" rx="4" fill="#2D6CDF"/>
+  <text x="32" y="142" font-size="8.5" fill="#717172">3 of 4 sent · resumes automatically</text>
+  <rect x="32" y="156" width="216" height="58" rx="14" fill="#FFFFFF" stroke="#F0F0F0"/><circle cx="62" cy="178" r="14" fill="#E9F7EF"/><text x="62" y="183" font-size="9" font-weight="600" fill="#006D37" text-anchor="middle">✓</text><text x="86" y="176" font-size="10.5" font-weight="600" fill="#1A1A1B">M. Haider</text><text x="86" y="190" font-size="8" fill="#717172">Uniform missing 2 items</text><text x="248" y="185" font-size="7.5" font-weight="600" fill="#1F9D63" text-anchor="end">Sent</text>
+  <rect x="32" y="222" width="216" height="58" rx="14" fill="#FFFFFF" stroke="#F0F0F0"/><circle cx="62" cy="244" r="14" fill="#E9F7EF"/><text x="62" y="249" font-size="9" font-weight="600" fill="#006D37" text-anchor="middle">✓</text><text x="86" y="242" font-size="10.5" font-weight="600" fill="#1A1A1B">Usman Aftab</text><text x="86" y="256" font-size="8" fill="#717172">Shoes not worn</text><text x="248" y="251" font-size="7.5" font-weight="600" fill="#1F9D63" text-anchor="end">Sent</text>
+  <rect x="32" y="288" width="216" height="58" rx="14" fill="#FFFFFF" stroke="#F0F0F0"/><circle cx="62" cy="310" r="14" fill="#FFF3E0"/><text x="62" y="315" font-size="9" font-weight="600" fill="#E67E22" text-anchor="middle">…</text><text x="86" y="308" font-size="10.5" font-weight="600" fill="#1A1A1B">Moiz Butt</text><text x="86" y="322" font-size="8" fill="#717172">Nails long</text><text x="248" y="317" font-size="7.5" font-weight="600" fill="#E67E22" text-anchor="end">Sending</text>
+  <rect x="32" y="354" width="216" height="58" rx="14" fill="#FFFFFF" stroke="#F0F0F0"/><circle cx="62" cy="376" r="14" fill="#F3F3F3"/><text x="62" y="381" font-size="9" font-weight="600" fill="#717172" text-anchor="middle">?</text><text x="86" y="374" font-size="10.5" font-weight="600" fill="#1A1A1B">Ali Raza</text><text x="86" y="388" font-size="8" fill="#717172">No number on file</text><rect x="188" y="364" width="48" height="26" rx="13" fill="#2D6CDF"/><text x="212" y="381" font-size="8" font-weight="600" fill="#FFFFFF" text-anchor="middle">Add No.</text>
+  <text x="140" y="452" font-size="8" fill="#A0A0A0" text-anchor="middle">Opens WhatsApp chat for each parent</text>
+  <!-- bottom nav -->
+  <rect x="14" y="582" width="252" height="54" fill="#FFFFFF"/>
+  <line x1="14" y1="582" x2="266" y2="582" stroke="#EEEEEE"/>
+  <text x="39.2" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">Home</text>
+  <text x="89.6" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">Entry</text>
+  <text x="140" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">Reports</text>
+  <text x="190.4" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">Notices</text>
+  <rect x="214.8" y="590" width="52" height="32" rx="14" fill="#2D6CDF"/><text x="240.8" y="611" font-size="9" font-weight="600" fill="#FFFFFF" text-anchor="middle">More</text>
+</svg>

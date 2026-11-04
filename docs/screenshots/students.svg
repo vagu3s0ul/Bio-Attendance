@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="280" height="660" viewBox="0 0 280 660" font-family="Inter, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <!-- phone frame -->
+  <rect x="6" y="6" width="268" height="648" rx="42" fill="#111111"/>
+  <rect x="10" y="10" width="260" height="640" rx="38" fill="#20242C"/>
+  <rect x="14" y="14" width="252" height="636" rx="32" fill="#FAFAFA"/>
+  <!-- status bar -->
+  <text x="34" y="38" font-size="11" font-weight="600" fill="#1A1A1B">9:41</text>
+  <circle cx="230" cy="34" r="1.8" fill="#1A1A1B" opacity="0.8"/>
+  <circle cx="238" cy="34" r="1.8" fill="#1A1A1B" opacity="0.8"/>
+  <rect x="246" y="31.5" width="9" height="4" rx="2" fill="#1A1A1B" opacity="0.8"/>
+  <!-- header -->
+  <rect x="14" y="58" width="252" height="44" fill="#FFFFFF"/>
+  <line x1="14" y1="102" x2="266" y2="102" stroke="#EEEEEE"/>
+  <text x="32" y="86" font-size="14" font-weight="700" letter-spacing="0.5" fill="#2D6CDF">SPSC</text>
+  <rect x="206" y="67" width="54" height="26" rx="13" fill="#2D6CDF"/><text x="233" y="84" font-size="9" font-weight="600" fill="#FFFFFF" text-anchor="middle">＋ Add</text>
+  <!-- content -->
+  <rect x="32" y="120" width="216" height="32" rx="12" fill="#FFFFFF" stroke="#F0F0F0"/><text x="46" y="140" font-size="9" fill="#A0A0A0">Search name or roll…</text>
+  <rect x="32" y="164" width="52" height="24" rx="12" fill="#2D6CDF"/><text x="58" y="179" font-size="8.5" font-weight="600" fill="#FFFFFF" text-anchor="middle">10B</text>
+  <rect x="90" y="164" width="52" height="24" rx="12" fill="#FFFFFF" stroke="#F0F0F0"/><text x="116" y="179" font-size="8.5" fill="#717172" text-anchor="middle">5G</text>
+  <rect x="148" y="164" width="52" height="24" rx="12" fill="#FFFFFF" stroke="#F0F0F0"/><text x="174" y="179" font-size="8.5" fill="#717172" text-anchor="middle">7A</text>
+  <rect x="32" y="200" width="216" height="52" rx="14" fill="#FFFFFF" stroke="#F0F0F0"/><text x="48" y="222" font-size="10.5" font-weight="600" fill="#1A1A1B">M. Haider</text><text x="48" y="236" font-size="8" fill="#717172">Roll 2539 · 10B</text><text x="210" y="225" font-size="8" font-weight="600" fill="#2D6CDF">Edit</text>
+  <rect x="32" y="260" width="216" height="52" rx="14" fill="#FFFFFF" stroke="#F0F0F0"/><text x="48" y="282" font-size="10.5" font-weight="600" fill="#1A1A1B">Usman Aftab</text><text x="48" y="296" font-size="8" fill="#717172">Roll 2570 · 10B</text><text x="210" y="285" font-size="8" font-weight="600" fill="#2D6CDF">Edit</text>
+  <rect x="32" y="320" width="216" height="52" rx="14" fill="#FFFFFF" stroke="#F0F0F0"/><text x="48" y="342" font-size="10.5" font-weight="600" fill="#1A1A1B">Moiz Butt</text><text x="48" y="356" font-size="8" fill="#717172">Roll 2605 · 10B</text><text x="210" y="345" font-size="8" font-weight="600" fill="#2D6CDF">Edit</text>
+  <rect x="32" y="380" width="216" height="52" rx="14" fill="#FFFFFF" stroke="#F0F0F0"/><text x="48" y="402" font-size="10.5" font-weight="600" fill="#1A1A1B">Ali Raza</text><text x="48" y="416" font-size="8" fill="#717172">Roll 2621 · 10B</text><text x="210" y="405" font-size="8" font-weight="600" fill="#2D6CDF">Edit</text>
+  <text x="140" y="470" font-size="8.5" fill="#A0A0A0" text-anchor="middle">Tap a row for WhatsApp &amp; face options</text>
+  <!-- bottom nav -->
+  <rect x="14" y="582" width="252" height="54" fill="#FFFFFF"/>
+  <line x1="14" y1="582" x2="266" y2="582" stroke="#EEEEEE"/>
+  <text x="39.2" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">Home</text>
+  <text x="89.6" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">Entry</text>
+  <text x="140" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">Reports</text>
+  <text x="190.4" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">Notices</text>
+  <rect x="214.8" y="590" width="52" height="32" rx="14" fill="#2D6CDF"/><text x="240.8" y="611" font-size="9" font-weight="600" fill="#FFFFFF" text-anchor="middle">More</text>
+</svg>

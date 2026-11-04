@@ -1,16 +1,18 @@
 /**
- * Settings: base URL + persisted session pieces (cookie / user).
+ * Settings: base URL + persisted session pieces (API token / cookie / user).
  *
- * The PHP site has no JSON API and authenticates with PHP sessions, so the
- * native client keeps the PHPSESSID cookie (SecureStore) and replays it on
- * every request — and also seeds the WebView's cookie store so embedded
- * pages (forms, links) keep the same session.
+ * Native API calls authenticate with the bearer token issued by api.php; the
+ * PHPSESSID cookie the login response also sets is kept (SecureStore) and
+ * seeds the WebView's cookie store so embedded pages (forms, links) share the
+ * same session.
  */
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import type { Role } from '@/types';
 
 const BASE_URL_KEY = 'sps_base_url';
 const COOKIE_KEY = 'sps_session_cookie';
+const TOKEN_KEY = 'sps_api_token';
 const USER_KEY = 'sps_user';
 
 export const DEFAULT_BASE_URL =
@@ -32,7 +34,26 @@ export async function getBaseUrl(): Promise<string> {
   return cachedBaseUrl;
 }
 
-// --- Session cookie -------------------------------------------------------
+// --- API token ------------------------------------------------------------
+
+export async function getToken(): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export async function setToken(token: string | null): Promise<void> {
+  try {
+    if (token) await SecureStore.setItemAsync(TOKEN_KEY, token);
+    else await SecureStore.deleteItemAsync(TOKEN_KEY);
+  } catch {
+    // non-fatal
+  }
+}
+
+// --- Session cookie (WebView pages) ---------------------------------------
 
 export async function getCookie(): Promise<string | null> {
   try {
@@ -96,7 +117,7 @@ export async function getUser(): Promise<{ username: string; name: string; role:
 }
 
 export async function setUser(
-  user: { username: string; name: string; role: 'admin' | 'teacher' } | null
+  user: { username: string; name: string; role: Role } | null
 ): Promise<void> {
   try {
     if (user) await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));

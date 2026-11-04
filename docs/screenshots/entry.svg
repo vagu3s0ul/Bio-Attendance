@@ -14,83 +14,38 @@
   <text x="32" y="86" font-size="14" font-weight="700" letter-spacing="0.5" fill="#2D6CDF">SPSC</text>
   <circle cx="246" cy="80" r="13" fill="#E8E8E8"/>
   <text x="246" y="85" font-size="9" font-weight="600" fill="#2D6CDF" text-anchor="middle">A</text>
-  <!-- date action bar -->
-  <rect x="14" y="102" width="252" height="48" fill="#FFFFFF"/>
-  <line x1="14" y1="150" x2="266" y2="150" stroke="#EEEEEE"/>
-  <text x="26" y="132" font-size="15" font-weight="600" fill="#2D6CDF" text-anchor="middle">‹</text>
-  <text x="44" y="118" font-size="7.5" font-weight="600" letter-spacing="1" fill="#717172">DATE</text>
-  <text x="44" y="133" font-size="11" font-weight="600" fill="#2D6CDF">Today, 9 Aug</text>
-  <text x="118" y="132" font-size="15" font-weight="600" fill="#2D6CDF" text-anchor="middle">›</text>
-  <rect x="132" y="110" width="106" height="32" rx="10" fill="#FFFFFF" stroke="#2D6CDF"/>
-  <text x="185" y="131" font-size="9.5" font-weight="600" fill="#2D6CDF" text-anchor="middle">✓✓ Mark All</text>
-  <!-- late warning -->
-  <rect x="14" y="150" width="252" height="28" fill="#FFF9E6"/>
-  <polygon points="30,160 36,171 24,171" fill="#F39C12"/>
-  <text x="44" y="169" font-size="8.5" fill="#805D00">You are entering data after the deadline.</text>
-  <!-- student card 1 -->
-  <rect x="32" y="190" width="216" height="120" rx="16" fill="#FFFFFF" stroke="#F0F0F0"/>
-  <text x="48" y="210" font-size="7" font-weight="600" letter-spacing="0.8" fill="#717172">ROLL 1978</text>
-  <text x="48" y="226" font-size="12.5" font-weight="400" fill="#1A1A1B">M. Abdullah Waheed</text>
-  <!-- chips: Uniform ✓ / Shoes ✓ / Socks ✗ / Haircut / Nails / Bag -->
-  <rect x="48" y="238" width="28" height="40" rx="8" fill="#E9F7EF"/>
-  <circle cx="70" cy="245" r="3.5" fill="#006D37"/>
-  <text x="62" y="264" font-size="6.5" font-weight="600" fill="#006D37" text-anchor="middle">Uniform</text>
-  <rect x="80.8" y="238" width="28" height="40" rx="8" fill="#E9F7EF"/>
-  <circle cx="102.8" cy="245" r="3.5" fill="#006D37"/>
-  <text x="94.8" y="264" font-size="6.5" font-weight="600" fill="#006D37" text-anchor="middle">Shoes</text>
-  <rect x="113.6" y="238" width="28" height="40" rx="8" fill="#FDECEA"/>
-  <circle cx="135.6" cy="245" r="3.5" fill="#E74C3C"/>
-  <text x="127.6" y="264" font-size="6.5" font-weight="600" fill="#E74C3C" text-anchor="middle">Socks</text>
-  <rect x="146.4" y="238" width="28" height="40" rx="8" fill="#EEEEEE"/>
-  <circle cx="168.4" cy="245" r="3.5" fill="#E8E8E8"/>
-  <text x="160.4" y="264" font-size="6.5" font-weight="600" fill="#717172" text-anchor="middle">Haircut</text>
-  <rect x="179.2" y="238" width="28" height="40" rx="8" fill="#EEEEEE"/>
-  <circle cx="201.2" cy="245" r="3.5" fill="#E8E8E8"/>
-  <text x="193.2" y="264" font-size="6.5" font-weight="600" fill="#717172" text-anchor="middle">Nails</text>
-  <rect x="212" y="238" width="28" height="40" rx="8" fill="#EEEEEE"/>
-  <circle cx="234" cy="245" r="3.5" fill="#E8E8E8"/>
-  <text x="226" y="264" font-size="6.5" font-weight="600" fill="#717172" text-anchor="middle">Bag</text>
-  <rect x="48" y="286" width="192" height="24" rx="8" fill="#F3F3F3"/>
-  <text x="58" y="302" font-size="8.5" fill="#9AA0A6">Remarks (optional)</text>
-  <!-- student card 2 -->
-  <rect x="32" y="322" width="216" height="120" rx="16" fill="#FFFFFF" stroke="#F0F0F0"/>
-  <text x="48" y="342" font-size="7" font-weight="600" letter-spacing="0.8" fill="#717172">ROLL 2105</text>
-  <text x="48" y="358" font-size="12.5" font-weight="400" fill="#1A1A1B">M. Ismail</text>
-  <rect x="48" y="370" width="28" height="40" rx="8" fill="#E9F7EF"/>
-  <circle cx="70" cy="377" r="3.5" fill="#006D37"/>
-  <text x="62" y="396" font-size="6.5" font-weight="600" fill="#006D37" text-anchor="middle">Uniform</text>
-  <rect x="80.8" y="370" width="28" height="40" rx="8" fill="#FDECEA"/>
-  <circle cx="102.8" cy="377" r="3.5" fill="#E74C3C"/>
-  <text x="94.8" y="396" font-size="6.5" font-weight="600" fill="#E74C3C" text-anchor="middle">Shoes</text>
-  <rect x="113.6" y="370" width="28" height="40" rx="8" fill="#EEEEEE"/>
-  <circle cx="135.6" cy="377" r="3.5" fill="#E8E8E8"/>
-  <text x="127.6" y="396" font-size="6.5" font-weight="600" fill="#717172" text-anchor="middle">Socks</text>
-  <rect x="146.4" y="370" width="28" height="40" rx="8" fill="#EEEEEE"/>
-  <circle cx="168.4" cy="377" r="3.5" fill="#E8E8E8"/>
-  <text x="160.4" y="396" font-size="6.5" font-weight="600" fill="#717172" text-anchor="middle">Haircut</text>
-  <rect x="179.2" y="370" width="28" height="40" rx="8" fill="#E9F7EF"/>
-  <circle cx="201.2" cy="377" r="3.5" fill="#006D37"/>
-  <text x="193.2" y="396" font-size="6.5" font-weight="600" fill="#006D37" text-anchor="middle">Nails</text>
-  <rect x="212" y="370" width="28" height="40" rx="8" fill="#EEEEEE"/>
-  <circle cx="234" cy="377" r="3.5" fill="#E8E8E8"/>
-  <text x="226" y="396" font-size="6.5" font-weight="600" fill="#717172" text-anchor="middle">Bag</text>
-  <rect x="48" y="418" width="192" height="24" rx="8" fill="#F3F3F3"/>
-  <text x="58" y="434" font-size="8.5" fill="#9AA0A6">Remarks (optional)</text>
-  <!-- save area -->
-  <rect x="14" y="510" width="252" height="72" fill="#FFFFFF"/>
-  <line x1="14" y1="510" x2="266" y2="510" stroke="#EEEEEE"/>
-  <text x="30" y="532" font-size="7.5" font-weight="600" letter-spacing="0.8" fill="#717172">PROGRESS</text>
-  <text x="250" y="532" font-size="7.5" font-weight="600" letter-spacing="0.8" fill="#2D6CDF" text-anchor="end">2 OF 7 MARKED</text>
-  <rect x="30" y="540" width="212" height="4" rx="2" fill="#E8E8E8"/>
-  <rect x="30" y="540" width="74" height="4" rx="2" fill="#2D6CDF"/>
-  <rect x="30" y="552" width="212" height="28" rx="10" fill="#2D6CDF"/>
-  <text x="136" y="571" font-size="11" font-weight="600" fill="#FFFFFF" text-anchor="middle">Save Entries</text>
-  <!-- bottom tabs -->
+  <!-- content -->
+  <text x="32" y="124" font-size="14.5" font-weight="600" fill="#1A1A1B">Class 10B · Mon 4 Nov</text>
+  <text x="32" y="139" font-size="9" fill="#717172">21 students · 6 checks each</text>
+  <rect x="32" y="150" width="216" height="8" rx="4" fill="#E8E8E8"/><rect x="32" y="150" width="129" height="8" rx="4" fill="#2D6CDF"/>
+  <text x="32" y="172" font-size="8.5" fill="#717172">15 / 21 marked</text>
+  <rect x="32" y="184" width="216" height="74" rx="16" fill="#FFFFFF" stroke="#F0F0F0"/>
+  <text x="48" y="206" font-size="11" font-weight="600" fill="#1A1A1B">M. Haider</text><text x="48" y="219" font-size="8" fill="#717172">Roll 2539</text>
+  <circle cx="48" cy="240" r="9" fill="#E9F7EF" stroke="#1F9D63"/><text x="48" y="243" font-size="6.5" font-weight="600" fill="#006D37" text-anchor="middle">U</text>
+  <circle cx="82" cy="240" r="9" fill="#E9F7EF" stroke="#1F9D63"/><text x="82" y="243" font-size="6.5" font-weight="600" fill="#006D37" text-anchor="middle">S</text>
+  <circle cx="116" cy="240" r="9" fill="#E9F7EF" stroke="#1F9D63"/><text x="116" y="243" font-size="6.5" font-weight="600" fill="#006D37" text-anchor="middle">So</text>
+  <circle cx="150" cy="240" r="9" fill="#E9F7EF" stroke="#1F9D63"/><text x="150" y="243" font-size="6.5" font-weight="600" fill="#006D37" text-anchor="middle">H</text>
+  <circle cx="184" cy="240" r="9" fill="#E9F7EF" stroke="#1F9D63"/><text x="184" y="243" font-size="6.5" font-weight="600" fill="#006D37" text-anchor="middle">N</text>
+  <circle cx="218" cy="240" r="9" fill="#FFFFFF" stroke="#D8D8D8"/><text x="218" y="243" font-size="6.5" font-weight="600" fill="#9AA0A8" text-anchor="middle">B</text>
+  <rect x="32" y="266" width="216" height="74" rx="16" fill="#FFFFFF" stroke="#F0F0F0"/>
+  <text x="48" y="288" font-size="11" font-weight="600" fill="#1A1A1B">Usman Aftab</text><text x="48" y="301" font-size="8" fill="#717172">Roll 2570</text>
+  <circle cx="48" cy="322" r="9" fill="#E9F7EF" stroke="#1F9D63"/><text x="48" y="325" font-size="6.5" font-weight="600" fill="#006D37" text-anchor="middle">U</text>
+  <circle cx="82" cy="322" r="9" fill="#E9F7EF" stroke="#1F9D63"/><text x="82" y="325" font-size="6.5" font-weight="600" fill="#006D37" text-anchor="middle">S</text>
+  <circle cx="116" cy="322" r="9" fill="#E9F7EF" stroke="#1F9D63"/><text x="116" y="325" font-size="6.5" font-weight="600" fill="#006D37" text-anchor="middle">So</text>
+  <circle cx="150" cy="322" r="9" fill="#E9F7EF" stroke="#1F9D63"/><text x="150" y="325" font-size="6.5" font-weight="600" fill="#006D37" text-anchor="middle">H</text>
+  <circle cx="184" cy="322" r="9" fill="#E9F7EF" stroke="#1F9D63"/><text x="184" y="325" font-size="6.5" font-weight="600" fill="#006D37" text-anchor="middle">N</text>
+  <circle cx="218" cy="322" r="9" fill="#E9F7EF" stroke="#1F9D63"/><text x="218" y="325" font-size="6.5" font-weight="600" fill="#006D37" text-anchor="middle">B</text>
+  <rect x="32" y="352" width="216" height="34" rx="12" fill="#FFFFFF" stroke="#2D6CDF" stroke-width="1.5"/>
+  <text x="140" y="374" font-size="10.5" font-weight="600" fill="#2D6CDF" text-anchor="middle">✓✓ Mark All Uniform</text>
+  <text x="248" y="366" font-size="11" fill="#A0A0A0" text-anchor="end">↺</text>
+  <rect x="32" y="400" width="216" height="40" rx="12" fill="#2D6CDF"/><text x="140" y="425" font-size="11" font-weight="600" fill="#FFFFFF" text-anchor="middle">Save Entry</text>
+  <text x="140" y="456" font-size="8" fill="#A0A0A0" text-anchor="middle">Saved entries update the website instantly</text>
+  <!-- bottom nav -->
   <rect x="14" y="582" width="252" height="54" fill="#FFFFFF"/>
   <line x1="14" y1="582" x2="266" y2="582" stroke="#EEEEEE"/>
-  <text x="44" y="613" font-size="9" font-weight="600" fill="#717172" text-anchor="middle">Home</text>
-  <rect x="68" y="590" width="54" height="38" rx="12" fill="#2D6CDF"/>
-  <text x="95" y="613" font-size="9" font-weight="600" fill="#FFFFFF" text-anchor="middle">Entry</text>
-  <text x="146" y="613" font-size="9" font-weight="600" fill="#717172" text-anchor="middle">Reports</text>
-  <text x="197" y="613" font-size="9" font-weight="600" fill="#717172" text-anchor="middle">Profile</text>
+  <text x="39.2" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">Home</text>
+  <rect x="63.599999999999994" y="590" width="52" height="32" rx="14" fill="#2D6CDF"/><text x="89.6" y="611" font-size="9" font-weight="600" fill="#FFFFFF" text-anchor="middle">Entry</text>
+  <text x="140" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">Reports</text>
+  <text x="190.4" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">Notices</text>
+  <text x="240.8" y="611" font-size="9" font-weight="600" fill="#9AA0A8" text-anchor="middle">More</text>
 </svg>

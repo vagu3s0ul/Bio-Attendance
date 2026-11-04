@@ -3,36 +3,29 @@
   <rect x="6" y="6" width="268" height="648" rx="42" fill="#111111"/>
   <rect x="10" y="10" width="260" height="640" rx="38" fill="#20242C"/>
   <rect x="14" y="14" width="252" height="636" rx="32" fill="#FAFAFA"/>
-  <!-- decorative blobs -->
-  <circle cx="252" cy="84" r="84" fill="#D9E2FF" opacity="0.45"/>
-  <circle cx="24" cy="604" r="96" fill="#D9E2FF" opacity="0.4"/>
   <!-- status bar -->
   <text x="34" y="38" font-size="11" font-weight="600" fill="#1A1A1B">9:41</text>
   <circle cx="230" cy="34" r="1.8" fill="#1A1A1B" opacity="0.8"/>
   <circle cx="238" cy="34" r="1.8" fill="#1A1A1B" opacity="0.8"/>
   <rect x="246" y="31.5" width="9" height="4" rx="2" fill="#1A1A1B" opacity="0.8"/>
-  <!-- brand badge -->
-  <circle cx="140" cy="168" r="30" fill="#FFFFFF" stroke="#2D6CDF" stroke-width="2"/>
-  <text x="140" y="175" font-size="12" font-weight="700" letter-spacing="1.5" fill="#2D6CDF" text-anchor="middle">SPSC</text>
-  <text x="140" y="224" font-size="13.5" font-weight="400" fill="#1A1A1B" text-anchor="middle">Daily Student Checking System</text>
-  <text x="140" y="242" font-size="10.5" fill="#717172" text-anchor="middle">Sign in to continue</text>
-  <!-- sign-in card -->
-  <rect x="32" y="262" width="216" height="274" rx="16" fill="#FFFFFF" stroke="#EEEEEE"/>
-  <text x="48" y="294" font-size="8" font-weight="600" letter-spacing="1" fill="#717172">USERNAME</text>
-  <rect x="48" y="302" width="184" height="32" rx="8" fill="#FAFAFA" stroke="#EEEEEE"/>
-  <circle cx="62" cy="316" r="3.6" stroke="#9AA0A6" stroke-width="1.4" fill="none"/>
-  <path d="M56.6 325 a5.4 3.6 0 0 1 10.8 0" stroke="#9AA0A6" stroke-width="1.4" fill="none"/>
-  <text x="78" y="322" font-size="10" fill="#1A1A1B">admin</text>
-  <text x="48" y="352" font-size="8" font-weight="600" letter-spacing="1" fill="#717172">PASSWORD</text>
-  <rect x="48" y="360" width="184" height="32" rx="8" fill="#FAFAFA" stroke="#EEEEEE"/>
-  <rect x="58" y="366" width="8" height="6" rx="1.2" fill="#9AA0A6"/>
-  <path d="M58 366 v-2 a4 4 0 0 1 8 0 v2" stroke="#9AA0A6" stroke-width="1.4" fill="none"/>
-  <text x="78" y="380" font-size="10" fill="#1A1A1B">••••••••</text>
-  <rect x="48" y="406" width="14" height="14" rx="4" fill="#006D37"/>
-  <text x="55" y="416" font-size="9" fill="#FFFFFF" text-anchor="middle">✓</text>
-  <text x="70" y="417" font-size="9.5" fill="#717172">Remember me</text>
-  <text x="232" y="417" font-size="9.5" fill="#2D6CDF" text-anchor="end">Forgot password?</text>
-  <rect x="48" y="434" width="184" height="36" rx="10" fill="#2D6CDF"/>
-  <text x="140" y="457" font-size="12" font-weight="600" fill="#FFFFFF" text-anchor="middle">Sign In</text>
-  <text x="140" y="574" font-size="8.5" fill="#9AA0A6" text-anchor="middle">© 2026 Sialkot Public School &amp; College</text>
+  <!-- header -->
+  <rect x="14" y="58" width="252" height="44" fill="#FFFFFF"/>
+  <line x1="14" y1="102" x2="266" y2="102" stroke="#EEEEEE"/>
+  <text x="32" y="86" font-size="14" font-weight="700" letter-spacing="0.5" fill="#2D6CDF">SPSC</text>
+  <circle cx="246" cy="80" r="13" fill="#E8E8E8"/>
+  <text x="246" y="85" font-size="9" font-weight="600" fill="#2D6CDF" text-anchor="middle">A</text>
+  <!-- content -->
+  <rect x="52" y="180" width="176" height="176" rx="88" fill="#EBF1FD"/>
+  <text x="140" y="266" font-size="40" font-weight="700" fill="#2D6CDF" text-anchor="middle">S</text>
+  <text x="140" y="292" font-size="16" font-weight="700" fill="#1A1A1B" text-anchor="middle">SPSC Attendance</text>
+  <text x="140" y="308" font-size="8.5" fill="#717172" text-anchor="middle">Sialkot Public School &amp; College</text>
+  <rect x="50" y="392" width="180" height="34" rx="10" fill="#FFFFFF" stroke="#F0F0F0"/>
+  <text x="62" y="414" font-size="9.5" fill="#1A1A1B">admin@school</text>
+  <rect x="50" y="434" width="180" height="34" rx="10" fill="#FFFFFF" stroke="#F0F0F0"/>
+  <text x="62" y="456" font-size="9.5" fill="#1A1A1B">••••••••</text>
+  <rect x="50" y="478" width="180" height="38" rx="12" fill="#2D6CDF"/>
+  <text x="140" y="502" font-size="11" font-weight="600" fill="#FFFFFF" text-anchor="middle">Sign In</text>
+  <text x="140" y="536" font-size="8" fill="#A0A0A0" text-anchor="middle">Same account as attendance.spscsialkot.com</text>
+  <!-- bottom nav -->
+  
 </svg>

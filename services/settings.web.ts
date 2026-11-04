@@ -2,8 +2,10 @@
  * Web shim for services/settings.ts — localStorage instead of SecureStore so
  * the app can run in the browser (dev/preview). Same keys, same interface.
  */
+import type { Role } from '@/types';
 const BASE_URL_KEY = 'sps_base_url';
 const COOKIE_KEY = 'sps_session_cookie';
+const TOKEN_KEY = 'sps_api_token';
 const USER_KEY = 'sps_user';
 const USERNAME_KEY = 'sps_saved_username';
 
@@ -36,6 +38,14 @@ export async function getBaseUrl(): Promise<string> {
   if (cachedBaseUrl) return cachedBaseUrl;
   cachedBaseUrl = (read(BASE_URL_KEY) || DEFAULT_BASE_URL).replace(/\/+$/, '');
   return cachedBaseUrl;
+}
+
+export async function getToken(): Promise<string | null> {
+  return read(TOKEN_KEY);
+}
+
+export async function setToken(token: string | null): Promise<void> {
+  write(TOKEN_KEY, token);
 }
 
 export async function getCookie(): Promise<string | null> {
@@ -85,7 +95,7 @@ export async function getUser(): Promise<{ username: string; name: string; role:
 }
 
 export async function setUser(
-  user: { username: string; name: string; role: 'admin' | 'teacher' } | null
+  user: { username: string; name: string; role: Role } | null
 ): Promise<void> {
   write(USER_KEY, user ? JSON.stringify(user) : null);
 }

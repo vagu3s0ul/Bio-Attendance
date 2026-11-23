@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
 import AdminOnly from '@/components/AdminOnly';
@@ -23,21 +23,31 @@ import { SessionExpiredError } from '@/types';
 export default function ManageHub() {
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
+  const [flush, setFlush] = useState(false);
 
   const pickAndUpload = async () => {
     try {
       const res = await DocumentPicker.getDocumentAsync({
-        type: ['text/csv', 'text/comma-separated-values', 'application/vnd.ms-excel'],
+        type: [
+          'text/csv',
+          'text/comma-separated-values',
+          'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'application/octet-stream',
+        ],
         copyToCacheDirectory: true,
       });
       if (res.canceled || !res.assets?.length) return;
       const asset = res.assets[0];
       setUploading(true);
-      const result = await bulkUploadStudents({
-        uri: asset.uri,
-        name: asset.name || 'students.csv',
-        type: asset.mimeType || 'text/csv',
-      });
+      const result = await bulkUploadStudents(
+        {
+          uri: asset.uri,
+          name: asset.name || 'students.csv',
+          type: asset.mimeType || 'text/csv',
+        },
+        { flush }
+      );
       Alert.alert(result.ok ? 'Upload complete' : 'Upload issue', result.message, [
         { text: 'OK' },
       ]);
@@ -47,7 +57,7 @@ export default function ManageHub() {
         router.replace('/(auth)/login');
         return;
       }
-      Alert.alert('Upload failed', e?.message || 'Could not upload the CSV file.');
+      Alert.alert('Upload failed', e?.message || 'Could not upload the file.');
     } finally {
       setUploading(false);
     }
@@ -83,15 +93,27 @@ export default function ManageHub() {
         <Text style={[styles.sec, LABEL_CAPS]}>Bulk Upload</Text>
         <Card style={styles.csvCard}>
           <View style={styles.csvIcon}>
-            <Text style={styles.csvIconText}>CSV</Text>
+            <Text style={styles.csvIconText}>XLSX</Text>
           </View>
           <View style={styles.csvText}>
-            <Text style={styles.csvTitle}>Upload Students (CSV)</Text>
+            <Text style={styles.csvTitle}>Upload Students (Excel / CSV)</Text>
             <Text style={styles.csvBody}>
-              Bulk-import many students at once. Format: class, rollno, name.
+              Bulk-import many students at once. Columns: name, reg number, class, section, WhatsApp number.
             </Text>
           </View>
         </Card>
+        <Pressable onPress={() => setFlush((v) => !v)} style={styles.flushRow}>
+          <View style={[styles.checkbox, flush && styles.checkboxOn]}>
+            {flush ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
+          </View>
+          <View style={styles.flushText2}>
+            <Text style={styles.flushText}>Flush all existing students before import</Text>
+            <Text style={styles.flushHint}>
+              The uploaded file replaces the whole roster. Sections in the file (e.g. 5 + Red = 5R) are created automatically.
+            </Text>
+          </View>
+        </Pressable>
+
         <Pressable
           style={({ pressed }) => [styles.uploadBtn, pressed && styles.pressed, uploading && styles.busy]}
           onPress={pickAndUpload}
@@ -103,7 +125,7 @@ export default function ManageHub() {
             <Ionicons name="cloud-upload-outline" size={18} color="#fff" />
           )}
           <Text style={styles.uploadText}>
-            {uploading ? 'Uploading…' : 'Choose CSV & Upload'}
+            {uploading ? 'Uploading…' : 'Choose Excel / CSV & Upload'}
           </Text>
         </Pressable>
       </ScrollView>
@@ -119,8 +141,8 @@ const styles = StyleSheet.create({
   head: { gap: 2 },
   title: {
     fontSize: 21,
-    fontFamily: FONT.bold,
-    fontWeight: '700',
+    fontFamily: FONT.display,
+    fontWeight: '300',
     color: COLORS.text,
     letterSpacing: -0.4,
   },
@@ -136,10 +158,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  csvIconText: { fontSize: 10, fontWeight: '700', color: COLORS.compliant },
+  csvIconText: { fontSize: 10, fontWeight: '400', color: COLORS.compliant },
   csvText: { flex: 1 },
-  csvTitle: { fontSize: 14, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  csvTitle: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   csvBody: { fontSize: 12, color: COLORS.textMuted, marginTop: 2, fontFamily: FONT.regular },
+  flushRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingVertical: 6,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: COLORS.outline,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.surface,
+  },
+  checkboxOn: { backgroundColor: COLORS.danger, borderColor: COLORS.danger },
+  flushText: { fontSize: 13, color: COLORS.text, fontFamily: FONT.regular, fontWeight: '400' },
+  flushText2: { flex: 1, gap: 2 },
+  flushHint: { fontSize: 11.5, color: COLORS.textMuted, fontFamily: FONT.regular, lineHeight: 16 },
   uploadBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -149,7 +191,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     backgroundColor: COLORS.primary,
   },
-  uploadText: { color: '#fff', fontSize: 14, fontFamily: FONT.medium, fontWeight: '600' },
+  uploadText: { color: '#fff', fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400' },
   pressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
   busy: { opacity: 0.7 },
 });

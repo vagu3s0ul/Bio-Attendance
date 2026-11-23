@@ -12,12 +12,13 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import AdminOnly from '@/components/AdminOnly';
 import Screen from '@/components/Screen';
 import AppBar from '@/components/AppBar';
 import Card from '@/components/Card';
+import ClassPicker from '@/components/ClassPicker';
 import { COLORS, FONT, LABEL_CAPS, RADIUS, SPACING } from '@/constants/theme';
 import { addTeacher, deleteTeacher, fetchManagePage } from '@/services/api';
 import { ManagePage, ManageTeacher, SessionExpiredError } from '@/types';
@@ -128,15 +129,7 @@ function TeacherModal({
             </View>
             <View style={styles.field}>
               <Text style={[styles.fieldLabel, LABEL_CAPS]}>Class</Text>
-              <TextInput
-                style={styles.input}
-                value={className}
-                onChangeText={setClassName}
-                placeholder="e.g. 6A"
-                placeholderTextColor={COLORS.textFaint}
-                autoCapitalize="characters"
-                autoCorrect={false}
-              />
+              <ClassPicker value={className} onChange={setClassName} classes={classes} />
             </View>
             <View style={styles.field}>
               <Text style={[styles.fieldLabel, LABEL_CAPS]}>Role</Text>
@@ -306,7 +299,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: COLORS.primary,
   },
-  addText: { color: '#fff', fontSize: 13, fontFamily: FONT.medium, fontWeight: '600', letterSpacing: 0.4 },
+  addText: { color: '#fff', fontSize: 13, fontFamily: FONT.regular, fontWeight: '400', letterSpacing: 0.4 },
   scroll: { flex: 1 },
   list: { paddingHorizontal: SPACING.lg, gap: SPACING.md, paddingBottom: 32 },
   count: { color: COLORS.textMuted, marginTop: 2 },
@@ -319,13 +312,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontSize: 17, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.primary },
+  avatarText: { fontSize: 17, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.primary },
   teacherInfo: { flex: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  teacherName: { fontSize: 15, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text, flexShrink: 1 },
+  teacherName: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text, flexShrink: 1 },
   roleBadge: { backgroundColor: COLORS.surfaceHigh, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 },
   roleBadgeAdmin: { backgroundColor: COLORS.primarySoft },
-  roleBadgeText: { fontSize: 9.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.textMuted, letterSpacing: 0.4 },
+  roleBadgeText: { fontSize: 9.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.textMuted, letterSpacing: 0.4 },
   roleBadgeTextAdmin: { color: COLORS.primary },
   teacherSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 2, fontFamily: FONT.regular },
   moreBtn: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
@@ -345,7 +338,7 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 12,
   },
-  modalTitle: { fontSize: 18, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  modalTitle: { fontSize: 18, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   field: { gap: 6 },
   fieldLabel: { color: COLORS.textMuted },
   input: {
@@ -371,7 +364,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   roleChipOn: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  roleText: { fontSize: 13, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.textMuted },
+  roleText: { fontSize: 13, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.textMuted },
   roleTextOn: { color: '#fff' },
   err: { fontSize: 12, color: COLORS.danger, fontFamily: FONT.regular },
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 6 },
@@ -384,7 +377,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cancelText: { color: COLORS.text, fontSize: 14, fontFamily: FONT.medium, fontWeight: '600' },
+  cancelText: { color: COLORS.text, fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400' },
   saveBtn: {
     flex: 1,
     height: 44,
@@ -393,7 +386,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  saveText: { color: '#fff', fontSize: 14, fontFamily: FONT.medium, fontWeight: '600' },
+  saveText: { color: '#fff', fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400' },
   pressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
   busy: { opacity: 0.7 },
 });

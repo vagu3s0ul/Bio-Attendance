@@ -9,7 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect } from 'expo-router';
 import Screen from '@/components/Screen';
 import AppBar from '@/components/AppBar';
@@ -278,15 +278,15 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 21,
-    fontFamily: FONT.bold,
-    fontWeight: '700',
+    fontFamily: FONT.display,
+    fontWeight: '300',
     color: COLORS.text,
     letterSpacing: -0.4,
   },
   sub: { fontSize: 12.5, color: COLORS.textMuted, marginTop: 2, fontFamily: FONT.regular },
   markBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   markBtnOff: { opacity: 0.45 },
-  markText: { fontSize: 12.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.primary },
+  markText: { fontSize: 12.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.primary },
 
   filters: { gap: 8, paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md },
   filterScroll: { flexGrow: 0 },
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
   },
   filterChipOn: { backgroundColor: COLORS.primary },
-  filterText: { fontSize: 13, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  filterText: { fontSize: 13, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   filterTextOn: { color: '#fff' },
   filterCount: {
     minWidth: 19,
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   filterCountOn: { backgroundColor: 'rgba(255,255,255,0.24)' },
-  filterCountText: { fontSize: 10.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.textMuted },
+  filterCountText: { fontSize: 10.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.textMuted },
   filterCountTextOn: { color: '#fff' },
 
   searchWrap: {
@@ -350,17 +350,17 @@ const styles = StyleSheet.create({
   card: { gap: 8 },
   cardUnread: { borderWidth: 1, borderColor: COLORS.primarySoft },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  sender: { fontSize: 13.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  sender: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   senderSub: { fontSize: 11.5, color: COLORS.textMuted, marginTop: 1, fontFamily: FONT.regular },
   time: { fontSize: 11, color: COLORS.textFaint, fontFamily: FONT.regular },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.primary },
   subject: {
-    fontSize: 17,
-    fontFamily: FONT.bold,
-    fontWeight: '700',
+    fontSize: 13.5,
+    fontFamily: FONT.regular,
+    fontWeight: '400',
     color: COLORS.text,
     letterSpacing: -0.3,
-    lineHeight: 22,
+    lineHeight: 19,
   },
   body: { fontSize: 13.5, color: COLORS.textMuted, lineHeight: 20, fontFamily: FONT.regular },
   cardFoot: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 },

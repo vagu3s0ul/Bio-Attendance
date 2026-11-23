@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { COLORS, FONT, RADIUS, SPACING } from '@/constants/theme';
 import { IconTile, Panel, Pill, QuickTile, SectionHeader } from '@/components/UI';
@@ -28,10 +28,12 @@ export default function SectionHeadHome({
   stats,
   classes,
   onSync,
+  onOpenTab,
 }: {
   stats?: AdminStats;
   classes?: ClassStatus[];
   onSync: () => void;
+  onOpenTab?: (tab: 'attendance' | 'classes', filter?: 'absent' | 'present') => void;
 }) {
   const router = useRouter();
   const { user } = useSession();
@@ -112,7 +114,7 @@ export default function SectionHeadHome({
       {/* Present rate + absence alerts */}
       <View style={styles.gridRow}>
         <Pressable
-          onPress={() => router.push('/web/staff_dashboard')}
+          onPress={() => onOpenTab?.('attendance', 'present')}
           style={({ pressed }) => [styles.metric, pressed && styles.pressed]}
         >
           <View style={styles.metricTop}>
@@ -123,14 +125,14 @@ export default function SectionHeadHome({
             <Text style={styles.metricValue}>{presentPct}%</Text>
             <Text style={styles.metricToday}>today</Text>
           </View>
-          <Text style={styles.metricSub}>{presentTotal} of {totalStudents} Enrolled</Text>
+          <Text style={styles.metricSub}>{presentTotal} of {totalStudents} Enrolled ›</Text>
           <View style={styles.metricTrack}>
             <View style={[styles.metricFill, { width: `${Math.min(presentPct, 100)}%` }]} />
           </View>
         </Pressable>
 
         <Pressable
-          onPress={() => router.push('/defaulters')}
+          onPress={() => onOpenTab?.('attendance', 'absent')}
           style={({ pressed }) => [styles.metric, pressed && styles.pressed]}
         >
           <View style={styles.metricTop}>
@@ -141,7 +143,7 @@ export default function SectionHeadHome({
             <Text style={[styles.metricValue, { color: COLORS.danger }]}>{absentTotal}</Text>
             <Text style={styles.metricToday}>Absentees</Text>
           </View>
-          <Text style={styles.metricSub}>Review in defaulter list</Text>
+          <Text style={styles.metricSub}>Review in defaulter list ›</Text>
           <View style={styles.metricTrack}>
             <View
               style={[
@@ -271,7 +273,7 @@ export default function SectionHeadHome({
       <SectionHeader
         title="Wing Sections Roster Overview"
         action="All classes"
-        onAction={() => router.push('/web/staff_dashboard')}
+        onAction={() => onOpenTab?.('classes')}
         style={styles.section}
       />
       <Panel style={styles.roster}>
@@ -328,7 +330,7 @@ const styles = StyleSheet.create({
 
   greetRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   greetLine: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  greet: { fontSize: 19, fontFamily: FONT.bold, fontWeight: '700', color: COLORS.text, flexShrink: 1 },
+  greet: { fontSize: 19, fontFamily: FONT.display, fontWeight: '300', color: COLORS.text, flexShrink: 1 },
   greetSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 2, fontFamily: FONT.regular },
   avatar: {
     width: 44,
@@ -355,8 +357,8 @@ const styles = StyleSheet.create({
   wingDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.primary },
   wingTitle: {
     fontSize: 15,
-    fontFamily: FONT.bold,
-    fontWeight: '700',
+    fontFamily: FONT.display,
+    fontWeight: '300',
     color: COLORS.text,
     flexShrink: 1,
   },
@@ -368,7 +370,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 10,
   },
-  blockTitle: { fontSize: 12.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  blockTitle: { fontSize: 12.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   blockSub: { fontSize: 11, color: COLORS.textMuted, marginTop: 1, fontFamily: FONT.regular },
 
   gridRow: { flexDirection: 'row', gap: SPACING.md },
@@ -382,7 +384,7 @@ const styles = StyleSheet.create({
   metricTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   metricLabel: { fontSize: 12.5, color: COLORS.textMuted, fontFamily: FONT.regular },
   metricValueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 5 },
-  metricValue: { fontSize: 24, fontFamily: FONT.bold, fontWeight: '700', color: COLORS.primary },
+  metricValue: { fontSize: 24, fontFamily: FONT.display, fontWeight: '300', color: COLORS.primary },
   metricToday: { fontSize: 10.5, color: COLORS.textFaint, fontFamily: FONT.regular },
   metricSub: { fontSize: 11, color: COLORS.textMuted, fontFamily: FONT.regular },
   metricTrack: {
@@ -396,7 +398,7 @@ const styles = StyleSheet.create({
 
   inbox: { gap: 10 },
   inboxHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  inboxTitle: { fontSize: 15, fontFamily: FONT.bold, fontWeight: '700', color: COLORS.text },
+  inboxTitle: { fontSize: 15, fontFamily: FONT.display, fontWeight: '300', color: COLORS.text },
   inboxSub: { fontSize: 11.5, color: COLORS.textMuted, marginTop: 2, fontFamily: FONT.regular },
   inboxBtn: {
     width: 34,
@@ -413,7 +415,7 @@ const styles = StyleSheet.create({
   noticeTop: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   noticeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.danger },
   noticeDotOff: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.outline },
-  noticeTitle: { flex: 1, fontSize: 13.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  noticeTitle: { flex: 1, fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   noticeTime: { fontSize: 11, color: COLORS.textFaint, fontFamily: FONT.regular },
   noticeBody: { fontSize: 12, color: COLORS.textMuted, lineHeight: 17, fontFamily: FONT.regular },
   noticeFoot: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
@@ -428,8 +430,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primarySoft,
   },
   noticeBtnSolid: { backgroundColor: COLORS.primary },
-  noticeBtnText: { fontSize: 10.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.primary },
-  noticeBtnTextSolid: { fontSize: 10.5, fontFamily: FONT.medium, fontWeight: '600', color: '#fff' },
+  noticeBtnText: { fontSize: 10.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.primary },
+  noticeBtnTextSolid: { fontSize: 10.5, fontFamily: FONT.regular, fontWeight: '400', color: '#fff' },
 
   directory: {
     flexDirection: 'row',
@@ -439,7 +441,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 12,
   },
-  dirTitle: { fontSize: 13.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  dirTitle: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   dirSub: { fontSize: 11, color: COLORS.textMuted, marginTop: 2, fontFamily: FONT.regular },
   dirCta: {
     width: 34,
@@ -464,8 +466,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  classAvatarText: { fontSize: 14, fontFamily: FONT.bold, fontWeight: '700', color: COLORS.primary },
-  className: { fontSize: 13.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  classAvatarText: { fontSize: 14, fontFamily: FONT.display, fontWeight: '300', color: COLORS.primary },
+  className: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   classMeta: { fontSize: 11, color: COLORS.textMuted, marginTop: 1, fontFamily: FONT.regular },
 
   footer: {

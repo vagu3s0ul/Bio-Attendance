@@ -1,0 +1,8 @@
+{
+  "version": "1.4.15",
+  "versionCode": 21,
+  "apkUrl": "https://github.com/vagu3s0ul/attendance_app/releases/download/v1.4.15/bio-attendance.apk",
+  "notes": "Background download support.",
+  "force": false,
+  "sha256": "666b4705a70ab9ff8c0af2a5ff1e5dcfa1247d6e4786b007839a32ec7a2433e9"
+}

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -9,13 +9,14 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Screen from '@/components/Screen';
 import AppBar from '@/components/AppBar';
 import { IconTile, Panel, Pill } from '@/components/UI';
 import { COLORS, FONT, RADIUS, SHADOW, SPACING } from '@/constants/theme';
-import { fetchEntry, submitEntry } from '@/services/api';
+import { fetchEntry, fetchProfile, submitEntry } from '@/services/api';
+import { canMarkAttendance } from '@/services/location';
 import { setAbsentRolls } from '@/services/attendance';
 import { CheckpointKey, EntryFormData, CHECKPOINTS, todayISO } from '@/services/domain';
 import { useSession } from '@/store/session';
@@ -37,15 +38,20 @@ interface StudentState {
   refs: Record<CheckpointKey, ChipRef>;
   remarks: { name: string; value: string } | null;
   attendance: Attendance;
+  /** True once the teacher has done something with this student in this
+   *  session (or the record shows a decision from an earlier save). Fresh
+   *  defaults — absent, all checks ticked — are NOT touched, so they never
+   *  count toward "checked". */
+  touched: boolean;
 }
 
-const CHIP_META: Record<CheckpointKey, { label: string; emoji: string }> = {
-  uniform: { label: 'Uniform', emoji: '👕' },
-  shoes: { label: 'Shoes', emoji: '👟' },
-  socks: { label: 'Socks', emoji: '🧦' },
-  haircut: { label: 'Haircut', emoji: '🙂' },
-  nails: { label: 'Nails', emoji: '🖐️' },
-  bag: { label: 'School Bag', emoji: '🎒' },
+const CHIP_META: Record<CheckpointKey, { label: string }> = {
+  uniform: { label: 'Uniform' },
+  shoes: { label: 'Shoes' },
+  socks: { label: 'Socks' },
+  haircut: { label: 'Haircut' },
+  nails: { label: 'Nails' },
+  bag: { label: 'School Bag' },
 };
 
 function shiftDate(iso: string, delta: number): string {
@@ -69,16 +75,14 @@ function nextChip(state: ChipState): ChipState {
   return 'neutral';
 }
 
-/** Checklist row: square checkbox + label, cycles neutral → ok → flagged. */
-function CheckRow({
+/** Big check tile: large symbol + word. Taps cycle ✓ → ✗ → – → ✓. */
+function CheckTile({
   label,
-  emoji,
   state,
   disabled,
   onPress,
 }: {
   label: string;
-  emoji: string;
   state: ChipState;
   disabled: boolean;
   onPress: () => void;
@@ -87,30 +91,24 @@ function CheckRow({
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      style={({ pressed }) => [styles.checkRow, pressed && !disabled && styles.pressedSoft]}
+      style={({ pressed }) => [
+        styles.checkTile,
+        state === 'compliant' && styles.checkTileOk,
+        state === 'non' && styles.checkTileNo,
+        disabled && styles.checkTileDisabled,
+        pressed && !disabled && styles.pressedSoft,
+      ]}
     >
-      <View
-        style={[
-          styles.checkBox,
-          state === 'compliant' && styles.checkBoxOk,
-          state === 'non' && styles.checkBoxNo,
-        ]}
-      >
-        {state === 'compliant' ? (
-          <Ionicons name="checkmark" size={12} color="#fff" />
-        ) : state === 'non' ? (
-          <Ionicons name="close" size={12} color="#fff" />
-        ) : null}
-      </View>
-      <Text style={styles.checkEmoji}>{emoji}</Text>
       <Text
         style={[
-          styles.checkLabel,
-          state === 'compliant' && styles.checkLabelOk,
-          state === 'non' && styles.checkLabelNo,
+          styles.checkSymbol,
+          state === 'compliant' && styles.checkSymbolOk,
+          state === 'non' && styles.checkSymbolNo,
         ]}
-        numberOfLines={1}
       >
+        {state === 'compliant' ? '✓' : state === 'non' ? '✗' : '–'}
+      </Text>
+      <Text style={styles.checkTileLabel} numberOfLines={1}>
         {label}
       </Text>
     </Pressable>
@@ -127,9 +125,23 @@ export default function EntryScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [waModal, setWaModal] = useState<{ roll: string; name: string } | null>(null);
+  const [deadline, setDeadline] = useState<string>('');
+  const [guard, setGuard] = useState<{ ok: boolean; reason?: string; distance?: number } | null>(null);
+  const [remarksOpen, setRemarksOpen] = useState<Record<string, boolean>>({});
 
   const dateRef = useRef(date);
   const dirtyRef = useRef(false);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const g = await canMarkAttendance(deadline);
+      if (alive) setGuard(g);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [deadline]);
 
   const load = useCallback(
     async (target: string, silent = false) => {
@@ -137,6 +149,8 @@ export default function EntryScreen() {
       try {
         const form = await fetchEntry(target);
         setDate(form.date || target);
+        // Keep the daily deadline fresh for the location/time guard.
+        fetchProfile().then((p) => setDeadline(p.deadline || '')).catch(() => {});
         dateRef.current = form.date || target;
         dirtyRef.current = false;
         setMeta({
@@ -145,7 +159,10 @@ export default function EntryScreen() {
           afterDeadline: form.afterDeadline,
         });
         // Default attendance is ABSENT: a student is only Present after their
-        // face attendance was verified (or the teacher taps Present).
+        // face attendance was verified (or the teacher taps Present). Checks
+        // arrive ticked from the server on a fresh entry. Present students
+        // whose checks all arrive undecided (e.g. face-marked — the server
+        // never wrote their checks) are defaulted to ticked below.
         setStudents(
           form.students.map((s) => {
             const chips = {} as Record<CheckpointKey, ChipState>;
@@ -154,13 +171,31 @@ export default function EntryScreen() {
               chips[cb.key] = cb.checked ? 'compliant' : 'neutral';
               refs[cb.key] = { name: cb.name, value: cb.value || 'on' };
             }
+            // 'neutral' only ever means "never decided" — a real issue is
+            // 'non'. So a present student with every check undecided and no
+            // remarks simply never had their checks written: tick them all
+            // and let the teacher untick the ones with something missing.
+            if (
+              s.absent === false &&
+              CHECKPOINTS.every((k) => chips[k] === 'neutral') &&
+              (s.remarks?.value ?? '').length === 0
+            ) {
+              for (const k of CHECKPOINTS) chips[k] = 'compliant';
+            }
             return {
               roll: s.roll,
               name: s.name,
               chips,
               refs,
               remarks: s.remarks,
-              attendance: s.absent ? 'absent' : 'present',
+              attendance: s.absent === false ? 'present' : 'absent',
+              // Touched when the record already shows a decision: present,
+              // a changed checkbox, or a remark. Untouched students sit on
+              // the fresh defaults and must not count as checked.
+              touched:
+                s.absent === false ||
+                s.checkboxes.some((cb) => !cb.checked) ||
+                (s.remarks?.value ?? '').length > 0,
             };
           })
         );
@@ -191,7 +226,7 @@ export default function EntryScreen() {
     setStudents((prev) =>
       prev.map((s, i) => {
         if (i !== si) return s;
-        return { ...s, chips: { ...s.chips, [key]: nextChip(s.chips[key]) } };
+        return { ...s, chips: { ...s.chips, [key]: nextChip(s.chips[key]) }, touched: true };
       })
     );
   }, []);
@@ -200,31 +235,83 @@ export default function EntryScreen() {
     dirtyRef.current = true;
     setStudents((prev) =>
       prev.map((s, i) =>
-        i !== si ? s : { ...s, remarks: s.remarks ? { ...s.remarks, value: text } : null }
+        i !== si ? s : { ...s, remarks: s.remarks ? { ...s.remarks, value: text } : null, touched: true }
       )
     );
   }, []);
 
   const setAttendance = useCallback((si: number, mode: Attendance) => {
     dirtyRef.current = true;
-    setStudents((prev) => prev.map((s, i) => (i !== si ? s : { ...s, attendance: mode })));
+    setStudents((prev) =>
+      prev.map((s, i) => {
+        if (i !== si) return s;
+        // Flipping to present with every check still undecided ticks them
+        // all — the teacher only unticks the ones with something missing.
+        if (
+          mode === 'present' &&
+          CHECKPOINTS.every((k) => s.chips[k] === 'neutral') &&
+          (s.remarks?.value ?? '').length === 0
+        ) {
+          const chips = {} as Record<CheckpointKey, ChipState>;
+          for (const k of CHECKPOINTS) chips[k] = 'compliant';
+          return { ...s, attendance: mode, chips, touched: true };
+        }
+        return { ...s, attendance: mode, touched: true };
+      })
+    );
+  }, []);
+
+  const markAllPresent = useCallback(() => {
+    dirtyRef.current = true;
+    setStudents((prev) =>
+      prev.map((s) => {
+        // Same default as flipping one student to present: undecided checks
+        // tick themselves; the teacher only unticks real issues.
+        if (
+          CHECKPOINTS.every((k) => s.chips[k] === 'neutral') &&
+          (s.remarks?.value ?? '').length === 0
+        ) {
+          const chips = {} as Record<CheckpointKey, ChipState>;
+          for (const k of CHECKPOINTS) chips[k] = 'compliant';
+          return { ...s, attendance: 'present' as Attendance, chips, touched: true };
+        }
+        return { ...s, attendance: 'present' as Attendance, touched: true };
+      })
+    );
   }, []);
 
   const markAllUniform = useCallback(() => {
     dirtyRef.current = true;
     setStudents((prev) =>
-      prev.map((s) => ({ ...s, chips: { ...s.chips, uniform: 'compliant' as ChipState } }))
+      prev.map((s) => ({
+        ...s,
+        chips: { ...s.chips, uniform: 'compliant' as ChipState },
+        touched: s.attendance === 'present' ? true : s.touched,
+      }))
     );
   }, []);
 
   const clearAll = useCallback(() => {
-    dirtyRef.current = true;
-    setStudents((prev) =>
-      prev.map((s) => {
-        const chips = {} as Record<CheckpointKey, ChipState>;
-        for (const k of CHECKPOINTS) chips[k] = 'neutral';
-        return { ...s, chips, attendance: 'absent' as Attendance };
-      })
+    Alert.alert(
+      'Clear all marks?',
+      'This resets every student to absent with all checks ticked.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: () => {
+            dirtyRef.current = true;
+            setStudents((prev) =>
+              prev.map((s) => {
+                const chips = {} as Record<CheckpointKey, ChipState>;
+                for (const k of CHECKPOINTS) chips[k] = 'compliant';
+                return { ...s, chips, attendance: 'absent' as Attendance, touched: false };
+              })
+            );
+          },
+        },
+      ]
     );
   }, []);
 
@@ -233,18 +320,28 @@ export default function EntryScreen() {
     [students]
   );
   const absentCount = students.length - presentCount;
-  const markedCount = useMemo(
+  // Honest progress: only students the teacher has actually dealt with —
+  // present with every check decided, or explicitly marked absent. Tapping
+  // Present alone, or leaving a student on the defaults, does not count.
+  const checkedCount = useMemo(
     () =>
       students.filter(
-        (s) => s.attendance === 'present' && CHECKPOINTS.some((k) => s.chips[k] !== 'neutral')
+        (s) =>
+          s.touched &&
+          (s.attendance === 'absent' || CHECKPOINTS.every((k) => s.chips[k] !== 'neutral'))
       ).length,
     [students]
   );
-  const pendingCount = Math.max(students.length - markedCount - absentCount, 0);
-  const progress = students.length > 0 ? Math.round((presentCount / students.length) * 100) : 0;
+  const toCheckCount = Math.max(students.length - checkedCount, 0);
+  const progress = students.length > 0 ? Math.round((checkedCount / students.length) * 100) : 0;
 
   const save = useCallback(async () => {
     if (students.length === 0) return;
+    const guard = await canMarkAttendance(deadline);
+    if (!guard.ok) {
+      Alert.alert('Cannot mark attendance', guard.reason || 'Attendance is not allowed right now.');
+      return;
+    }
     setSaving(true);
     const fields: Record<string, string> = { record_date: date };
     for (const s of students) {
@@ -261,7 +358,7 @@ export default function EntryScreen() {
     try {
       const res = await submitEntry(fields);
       if (res.ok) {
-        const className = meta?.classLabel || '';
+        const className = (meta?.classLabel || '').replace(/^Class:\s*/i, '').trim();
         const failed = students
           .filter((s) => s.attendance === 'present')
           .map((s) => ({
@@ -310,9 +407,21 @@ export default function EntryScreen() {
     } finally {
       setSaving(false);
     }
-  }, [date, students, load, signOut, meta]);
+  }, [date, students, load, signOut, meta, deadline]);
 
   const canGoNext = !meta?.maxDate || date < meta.maxDate;
+  const blocked = !!guard && !guard.ok;
+
+  // Location status for the header pill + banner. The guard carries the
+  // distance in metres when the phone is outside the campus geofence.
+  const locState = !guard
+    ? 'checking'
+    : guard.ok
+    ? 'onCampus'
+    : guard.distance !== undefined
+    ? 'outside'
+    : 'blocked';
+  const locDistance = guard?.distance !== undefined ? Math.round(guard.distance) : null;
 
   return (
     <Screen>
@@ -323,6 +432,44 @@ export default function EntryScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        {/* Location: pill top-right always; red banner only outside campus */}
+        <View style={styles.locHead}>
+          <Text style={styles.screenTitle}>Daily Entry</Text>
+          <View style={styles.flex} />
+          {locState === 'onCampus' ? (
+            <Pill
+              label={locDistance !== null ? `On campus · ${locDistance} m` : 'On campus'}
+              tone="mint"
+              icon="ellipse"
+            />
+          ) : locState === 'outside' ? (
+            <Pill
+              label={`Outside campus · ${locDistance} m`}
+              tone="rose"
+              icon="ellipse"
+            />
+          ) : locState === 'checking' ? (
+            <Pill label="Checking location…" tone="slate" icon="ellipse" />
+          ) : null}
+        </View>
+        {locState === 'outside' ? (
+          <View style={styles.locBannerOutside}>
+            <Text style={styles.locBannerTitle}>
+              ● Outside campus · {locDistance} m from school
+            </Text>
+            <Text style={styles.locBannerNote}>
+              Attendance cannot be marked outside the campus location.
+            </Text>
+          </View>
+        ) : locState === 'blocked' ? (
+          <View style={styles.locBannerOther}>
+            <Ionicons name="lock-closed" size={16} color={COLORS.warningText} />
+            <Text style={styles.locBannerOtherText} numberOfLines={2}>
+              {guard?.reason || 'Attendance marking is not available right now.'}
+            </Text>
+          </View>
+        ) : null}
+
         {/* Target class + session date */}
         <Panel style={styles.targetPanel}>
           <View style={styles.targetRow}>
@@ -382,10 +529,10 @@ export default function EntryScreen() {
           <View style={styles.progressHead}>
             <View style={styles.flex}>
               <Text style={styles.progressTitle}>
-                Marked {presentCount}/{students.length} Students
+                Checked {checkedCount}/{students.length} students
               </Text>
               <Text style={styles.progressSub}>
-                Class roster completion: {progress}%
+                Fully checked = all 6 checks done, or marked absent
               </Text>
             </View>
             <View style={styles.ring}>
@@ -394,8 +541,7 @@ export default function EntryScreen() {
           </View>
 
           <View style={styles.track}>
-            <View style={[styles.trackPresent, { flex: Math.max(presentCount, 0.001) }]} />
-            <View style={[styles.trackAbsent, { flex: Math.max(absentCount, 0.001) }]} />
+            <View style={[styles.trackFill, { width: `${progress}%` }]} />
           </View>
 
           <View style={styles.countersRow}>
@@ -410,29 +556,55 @@ export default function EntryScreen() {
               <Text style={styles.counterValue}>{absentCount}</Text>
             </View>
             <View style={styles.counter}>
-              <View style={[styles.dot, { backgroundColor: COLORS.textFaint }]} />
-              <Text style={styles.counterLabel}>Pending</Text>
-              <Text style={styles.counterValue}>{pendingCount}</Text>
+              <View style={[styles.dot, { backgroundColor: COLORS.warning }]} />
+              <Text style={styles.counterLabel}>To check</Text>
+              <Text style={styles.counterValue}>{toCheckCount}</Text>
             </View>
           </View>
 
           <View style={styles.actionRow}>
             <Pressable
+              onPress={markAllPresent}
+              disabled={blocked}
+              style={({ pressed }) => [
+                styles.primaryAction,
+                pressed && !blocked && styles.pressedSoft,
+                blocked && styles.actionDisabled,
+              ]}
+            >
+              <Ionicons name="checkmark-done" size={16} color="#fff" />
+              <Text style={styles.primaryActionText}>Mark All Present</Text>
+            </Pressable>
+            <Pressable
               onPress={markAllUniform}
-              style={({ pressed }) => [styles.softAction, pressed && styles.pressedSoft]}
+              disabled={blocked}
+              style={({ pressed }) => [
+                styles.softAction,
+                pressed && !blocked && styles.pressedSoft,
+                blocked && styles.actionDisabled,
+              ]}
             >
               <Ionicons name="checkmark-done" size={16} color={COLORS.primary} />
               <Text style={styles.softActionText}>Mark All Uniform</Text>
             </Pressable>
             <Pressable
               onPress={clearAll}
-              style={({ pressed }) => [styles.ghostAction, pressed && styles.pressedSoft]}
+              disabled={blocked}
+              style={({ pressed }) => [
+                styles.ghostAction,
+                pressed && !blocked && styles.pressedSoft,
+                blocked && styles.actionDisabled,
+              ]}
             >
               <Ionicons name="refresh-outline" size={16} color={COLORS.textMuted} />
               <Text style={styles.ghostActionText}>Clear All</Text>
             </Pressable>
           </View>
         </Panel>
+
+        <Text style={styles.legend}>
+          Checks start ticked. Tap a tile: ✓ OK → ✗ issue → – not checked
+        </Text>
 
         {/* Roster header */}
         <View style={styles.rosterHead}>
@@ -469,8 +641,9 @@ export default function EntryScreen() {
           students.map((s, si) => {
             const flagged = CHECKPOINTS.some((k) => s.chips[k] === 'non');
             const inspected = CHECKPOINTS.every((k) => s.chips[k] === 'compliant');
+            const showRemarks = !!remarksOpen[s.roll] || (s.remarks?.value ?? '').length > 0;
             return (
-              <Panel key={`${s.roll}-${si}`} style={styles.studentCard}>
+              <Panel key={`${s.roll}-${si}`} style={[styles.studentCard, s.attendance === 'absent' && styles.absentCard]}>
                 <View style={styles.studentTop}>
                   <View style={styles.avatarWrap}>
                     <View style={styles.avatar}>
@@ -488,13 +661,17 @@ export default function EntryScreen() {
                       #{s.roll || si + 1} {s.name}
                     </Text>
                     <Text style={styles.studentMeta} numberOfLines={1}>
-                      {s.attendance === 'present' ? 'Present today' : 'Marked absent'} •{' '}
-                      {CHECKPOINTS.filter((k) => s.chips[k] === 'compliant').length}/
-                      {CHECKPOINTS.length} checks
+                      {!s.touched
+                        ? 'Absent by default · not marked yet'
+                        : s.attendance === 'present'
+                        ? `Present today · ${CHECKPOINTS.filter((k) => s.chips[k] === 'compliant').length}/${CHECKPOINTS.length} checks`
+                        : 'Marked absent'}
                     </Text>
                   </View>
 
-                  {flagged ? (
+                  {!s.touched ? (
+                    <Pill label="Not marked" tone="slate" icon="time-outline" />
+                  ) : flagged ? (
                     <Pill label="Flagged" tone="rose" icon="alert-circle-outline" />
                   ) : inspected ? (
                     <Pill label="Inspected" tone="sky" icon="checkmark-circle-outline" />
@@ -506,10 +683,12 @@ export default function EntryScreen() {
                 <View style={styles.attRow}>
                   <Pressable
                     onPress={() => setAttendance(si, 'present')}
+                    disabled={blocked}
                     style={({ pressed }) => [
                       styles.attBtn,
                       s.attendance === 'present' && styles.attBtnPresent,
-                      pressed && styles.pressedSoft,
+                      pressed && !blocked && styles.pressedSoft,
+                      blocked && styles.disabledBtn,
                     ]}
                   >
                     <Ionicons
@@ -528,10 +707,12 @@ export default function EntryScreen() {
                   </Pressable>
                   <Pressable
                     onPress={() => setAttendance(si, 'absent')}
+                    disabled={blocked}
                     style={({ pressed }) => [
                       styles.attBtn,
                       s.attendance === 'absent' && styles.attBtnAbsent,
-                      pressed && styles.pressedSoft,
+                      pressed && !blocked && styles.pressedSoft,
+                      blocked && styles.disabledBtn,
                     ]}
                   >
                     <Ionicons
@@ -556,43 +737,62 @@ export default function EntryScreen() {
                   </Pressable>
                 </View>
 
-                <View style={[styles.checklist, s.attendance === 'absent' && styles.disabled]}>
-                  <View style={styles.checklistHead}>
-                    <Ionicons name="list-outline" size={14} color={COLORS.textMuted} />
-                    <Text style={styles.checklistTitle}>Morning Discipline &amp; Dress Code</Text>
-                    {flagged ? (
-                      <Pill
-                        label={`${CHECKPOINTS.filter((k) => s.chips[k] === 'non').length} Issues`}
-                        tone="rose"
-                      />
-                    ) : null}
-                  </View>
-                  <View style={styles.checkGrid}>
-                    {CHECKPOINTS.map((k) => (
-                      <View key={k} style={styles.checkCell}>
-                        <CheckRow
-                          label={CHIP_META[k].label}
-                          emoji={CHIP_META[k].emoji}
-                          state={s.chips[k]}
-                          disabled={s.attendance === 'absent'}
-                          onPress={() => s.attendance === 'present' && toggle(si, k)}
+                {s.attendance === 'present' ? (
+                  <View style={styles.checklist}>
+                    <View style={styles.checklistHead}>
+                      <Ionicons name="list-outline" size={14} color={COLORS.textMuted} />
+                      <Text style={styles.checklistTitle}>Morning Discipline &amp; Dress Code</Text>
+                      {flagged ? (
+                        <Pill
+                          label={`${CHECKPOINTS.filter((k) => s.chips[k] === 'non').length} Issues`}
+                          tone="rose"
                         />
-                      </View>
-                    ))}
+                      ) : null}
+                    </View>
+                    <View style={styles.checkGrid}>
+                      {CHECKPOINTS.map((k) => (
+                        <View key={k} style={styles.checkCell}>
+                          <CheckTile
+                            label={CHIP_META[k].label}
+                            state={s.chips[k]}
+                            disabled={blocked}
+                            onPress={() => toggle(si, k)}
+                          />
+                        </View>
+                      ))}
+                    </View>
                   </View>
-                </View>
+                ) : (
+                  <Text style={styles.absentNote}>
+                    {s.touched
+                      ? 'Marked absent — checks not needed. Tap Present to check instead.'
+                      : 'Absent by default — checks are ticked and ready. Tap Present, or face scan marks them present.'}
+                  </Text>
+                )}
 
-                <View style={[styles.remarksWrap, s.attendance === 'absent' && styles.disabled]}>
-                  <Ionicons name="chatbox-ellipses-outline" size={15} color={COLORS.textFaint} />
-                  <TextInput
-                    style={styles.remarks}
-                    value={s.remarks?.value ?? ''}
-                    onChangeText={(t) => s.attendance === 'present' && setRemarks(si, t)}
-                    placeholder="Add observation remarks…"
-                    placeholderTextColor={COLORS.textFaint}
-                    editable={s.attendance === 'present'}
-                  />
-                </View>
+                {showRemarks ? (
+                  <View style={styles.remarksWrap}>
+                    <Ionicons name="chatbox-ellipses-outline" size={15} color={COLORS.textFaint} />
+                    <TextInput
+                      style={styles.remarks}
+                      value={s.remarks?.value ?? ''}
+                      onChangeText={(t) => {
+                        if (s.attendance === 'present') setRemarks(si, t);
+                      }}
+                      placeholder="Add observation remarks…"
+                      placeholderTextColor={COLORS.textFaint}
+                      editable={s.attendance === 'present' && !blocked}
+                    />
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={() => setRemarksOpen((prev) => ({ ...prev, [s.roll]: true }))}
+                    style={({ pressed }) => [styles.remarksToggle, pressed && styles.pressedSoft]}
+                  >
+                    <Ionicons name="chatbox-ellipses-outline" size={15} color={COLORS.primary} />
+                    <Text style={styles.remarksToggleText}>+ Add remark</Text>
+                  </Pressable>
+                )}
               </Panel>
             );
           })
@@ -617,16 +817,16 @@ export default function EntryScreen() {
           <IconTile icon="checkmark-done-circle-outline" tone="lavender" size={38} radius={12} iconSize={19} />
           <View style={styles.saveText}>
             <Text style={styles.saveLabel}>Status</Text>
-            <Text style={styles.saveValue}>{presentCount} Marked</Text>
+            <Text style={styles.saveValue}>{checkedCount} Checked</Text>
           </View>
           <Pressable
             style={({ pressed }) => [
               styles.saveBtn,
-              pressed && styles.pressedSoft,
-              saving && styles.busy,
+              pressed && !blocked && styles.pressedSoft,
+              (saving || blocked) && styles.busy,
             ]}
             onPress={save}
-            disabled={saving}
+            disabled={saving || blocked}
           >
             {saving ? (
               <ActivityIndicator color="#fff" size="small" />
@@ -646,7 +846,54 @@ export default function EntryScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flex: 1 },
+  disabledBtn: { opacity: 0.4 },
   content: { padding: SPACING.lg, paddingBottom: 28, gap: SPACING.md },
+
+  locHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  screenTitle: {
+    fontSize: 20,
+    fontFamily: FONT.display,
+    fontWeight: '300',
+    color: COLORS.text,
+    letterSpacing: -0.3,
+  },
+  locBannerOutside: {
+    backgroundColor: COLORS.dangerSoft,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 4,
+  },
+  locBannerTitle: {
+    fontSize: 13,
+    fontFamily: FONT.medium,
+    fontWeight: '600',
+    color: COLORS.danger,
+    textAlign: 'center',
+  },
+  locBannerNote: {
+    fontSize: 12,
+    fontFamily: FONT.medium,
+    fontWeight: '600',
+    color: COLORS.danger,
+    textAlign: 'center',
+  },
+  locBannerOther: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: COLORS.warningBg,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  locBannerOtherText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: FONT.medium,
+    fontWeight: '600',
+    color: COLORS.warningText,
+  },
 
   targetPanel: { gap: 12 },
   targetRow: { flexDirection: 'row', gap: 10 },
@@ -693,9 +940,9 @@ const styles = StyleSheet.create({
   progressPanel: { gap: 12 },
   progressHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   progressTitle: {
-    fontSize: 17,
-    fontFamily: FONT.bold,
-    fontWeight: '700',
+    fontSize: 20,
+    fontFamily: FONT.display,
+    fontWeight: '300',
     color: COLORS.text,
     letterSpacing: -0.3,
   },
@@ -712,15 +959,12 @@ const styles = StyleSheet.create({
   },
   ringText: { fontSize: 14, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.primary },
   track: {
-    flexDirection: 'row',
     height: 8,
     borderRadius: 4,
     overflow: 'hidden',
     backgroundColor: COLORS.field,
-    gap: 2,
   },
-  trackPresent: { backgroundColor: COLORS.primary, borderRadius: 4 },
-  trackAbsent: { backgroundColor: COLORS.danger, borderRadius: 4 },
+  trackFill: { height: '100%', backgroundColor: COLORS.primary, borderRadius: 4 },
   countersRow: { flexDirection: 'row', gap: 8 },
   counter: {
     flex: 1,
@@ -736,8 +980,19 @@ const styles = StyleSheet.create({
   counterLabel: { flex: 1, fontSize: 12.5, color: COLORS.textMuted, fontFamily: FONT.regular },
   counterValue: { fontSize: 14, fontFamily: FONT.bold, fontWeight: '700', color: COLORS.text },
   actionRow: { flexDirection: 'row', gap: 8 },
+  primaryAction: {
+    flex: 1.4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 46,
+    borderRadius: 13,
+    backgroundColor: COLORS.primary,
+  },
+  primaryActionText: { fontSize: 13.5, fontFamily: FONT.medium, fontWeight: '600', color: '#fff' },
   softAction: {
-    flex: 1.3,
+    flex: 1.2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -758,12 +1013,21 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.field,
   },
   ghostActionText: { fontSize: 13.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.textMuted },
+  actionDisabled: { opacity: 0.45 },
+
+  legend: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    fontFamily: FONT.regular,
+    textAlign: 'center',
+  },
 
   rosterHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
   rosterTitle: { fontSize: 17, fontFamily: FONT.bold, fontWeight: '700', color: COLORS.text },
   rosterMeta: { fontSize: 12, color: COLORS.textMuted, fontFamily: FONT.regular },
 
   studentCard: { gap: 12 },
+  absentCard: { borderLeftWidth: 4, borderLeftColor: COLORS.danger },
   studentTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   avatarWrap: { width: 46, height: 46 },
   avatar: {
@@ -831,26 +1095,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.textMuted,
   },
-  checkGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  checkCell: { width: '48%' },
-  checkRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 },
-  checkBox: {
-    width: 17,
-    height: 17,
-    borderRadius: 5,
-    borderWidth: 1.4,
+  checkGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 6 },
+  checkCell: { width: '32%' },
+  checkTile: {
+    height: 52,
+    borderRadius: 12,
+    borderWidth: 1.5,
     borderColor: COLORS.outline,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.field,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 2,
   },
-  checkBoxOk: { backgroundColor: COLORS.compliant, borderColor: COLORS.compliant },
-  checkBoxNo: { backgroundColor: COLORS.danger, borderColor: COLORS.danger },
-  checkEmoji: { fontSize: 12 },
-  checkLabel: { flex: 1, fontSize: 12.5, color: COLORS.text, fontFamily: FONT.regular },
-  checkLabelOk: { color: COLORS.text, fontFamily: FONT.medium, fontWeight: '600' },
-  checkLabelNo: { color: COLORS.danger, fontFamily: FONT.medium, fontWeight: '600' },
-  disabled: { opacity: 0.45 },
+  checkTileOk: { backgroundColor: COLORS.successSoft, borderColor: COLORS.compliant },
+  checkTileNo: { backgroundColor: COLORS.dangerSoft, borderColor: COLORS.danger },
+  checkTileDisabled: { opacity: 0.45 },
+  checkSymbol: { fontSize: 20, fontWeight: '700', color: COLORS.textFaint, lineHeight: 22 },
+  checkSymbolOk: { color: COLORS.compliant },
+  checkSymbolNo: { color: COLORS.danger },
+  checkTileLabel: { fontSize: 11, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  absentNote: { fontSize: 12, color: COLORS.textMuted, fontFamily: FONT.regular, lineHeight: 17 },
 
   remarksWrap: {
     flexDirection: 'row',
@@ -862,6 +1126,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   remarks: { flex: 1, fontSize: 13, color: COLORS.text, fontFamily: FONT.regular },
+  remarksToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 38,
+    paddingHorizontal: 4,
+  },
+  remarksToggleText: { fontSize: 12.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.primary },
 
   endText: {
     textAlign: 'center',

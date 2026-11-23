@@ -2,36 +2,41 @@
   "expo": {
     "name": "Bio Attendance",
     "slug": "sps-attendance",
-    "version": "1.3.1",
+    "version": "1.4.17",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "cover",
+      "resizeMode": "contain",
       "backgroundColor": "#F5F7FA"
     },
-
-    "assetBundlePatterns": ["**/*"],
-
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Bio Attendance verifies you are on the school campus before marking attendance."
+      }
     },
-
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#F5F7FA"
+        "backgroundColor": "#00206C"
       },
       "package": "com.sps.attendance",
-      "versionCode": 5
+      "allowBackup": true,
+      "versionCode": 23,
+      "permissions": [
+        "REQUEST_INSTALL_PACKAGES",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
-
     "web": {
       "favicon": "./assets/favicon.png"
     },
-
     "plugins": [
       "expo-router",
       [
@@ -56,15 +61,13 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash.png",
-          "imageWidth": 1284,
-          "resizeMode": "cover",
+          "imageWidth": 240,
+          "resizeMode": "contain",
           "backgroundColor": "#F5F7FA"
         }
       ]
     ],
-
     "scheme": "spsattendance",
-
     "extra": {
       "router": {
         "origin": false

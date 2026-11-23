@@ -9,7 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Screen from '@/components/Screen';
 import AppBar from '@/components/AppBar';
@@ -129,6 +129,22 @@ export default function FaceHomeScreen() {
             onPress={() => {
               setMode('enroll');
               setQueueOnly(true);
+              if (roster && queue.length > 0) {
+                const payload = JSON.stringify(
+                  queue.map((s) => ({ roll: s.roll, name: s.name }))
+                );
+                router.push({
+                  pathname: '/face/enroll',
+                  params: {
+                    roll: queue[0].roll,
+                    name: queue[0].name,
+                    className: roster.class,
+                    samples: String(queue[0].samples),
+                    queue: payload,
+                    qi: '0',
+                  },
+                });
+              }
             }}
             style={[styles.segmentBtn, mode === 'enroll' && styles.segmentBtnOn]}
           >
@@ -315,7 +331,12 @@ export default function FaceHomeScreen() {
                     }`}
                     right={student.present ? 'Present' : student.samples > 0 ? 'Enrolled' : 'Enroll'}
                     last={i === arr.length - 1}
-                    onPress={() =>
+                    onPress={() => {
+                      const idx = queue.findIndex((s) => s.roll === student.roll);
+                      const payload =
+                        queue.length > 0
+                          ? JSON.stringify(queue.map((s) => ({ roll: s.roll, name: s.name })))
+                          : '';
                       router.push({
                         pathname: '/face/enroll',
                         params: {
@@ -323,9 +344,12 @@ export default function FaceHomeScreen() {
                           name: student.name,
                           className: roster.class,
                           samples: String(student.samples),
+                          ...(idx >= 0 && payload
+                            ? { queue: payload, qi: String(idx) }
+                            : {}),
                         },
-                      })
-                    }
+                      });
+                    }}
                   />
                 ))
               )}
@@ -409,7 +433,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   scanBtnOff: { opacity: 0.55 },
-  scanBtnTitle: { fontSize: 14.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  scanBtnTitle: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   scanBtnSub: { fontSize: 11.5, color: COLORS.textMuted, marginTop: 2, fontFamily: FONT.regular },
 
   gridRow: { flexDirection: 'row', gap: SPACING.md },
@@ -417,7 +441,7 @@ const styles = StyleSheet.create({
   scansPanel: { gap: 6 },
   scansHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   scansLabel: { fontSize: 12.5, color: COLORS.textMuted, fontFamily: FONT.regular },
-  scansValue: { fontSize: 26, fontFamily: FONT.bold, fontWeight: '700', color: COLORS.primary },
+  scansValue: { fontSize: 26, fontFamily: FONT.display, fontWeight: '300', color: COLORS.primary },
   scansSub: { fontSize: 12, color: COLORS.textMuted, fontFamily: FONT.regular },
   recentLabel: {
     fontSize: 10.5,
@@ -438,7 +462,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     backgroundColor: COLORS.chipIdle,
   },
-  ghostBtnText: { fontSize: 14.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  ghostBtnText: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   queueBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -448,7 +472,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     backgroundColor: COLORS.roseSoft,
   },
-  queueBtnText: { fontSize: 14.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.danger },
+  queueBtnText: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.danger },
   queueCount: {
     minWidth: 22,
     height: 22,
@@ -458,10 +482,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  queueCountText: { fontSize: 11.5, fontFamily: FONT.bold, fontWeight: '700', color: '#fff' },
+  queueCountText: { fontSize: 11.5, fontFamily: FONT.regular, fontWeight: '400', color: '#fff' },
 
   rosterHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
-  rosterTitle: { fontSize: 17, fontFamily: FONT.bold, fontWeight: '700', color: COLORS.text },
+  rosterTitle: { fontSize: 17, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   rosterMeta: { fontSize: 11.5, color: COLORS.textMuted, fontFamily: FONT.regular },
   list: { paddingVertical: 4 },
   footnote: {

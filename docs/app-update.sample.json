@@ -1,0 +1,7 @@
+{
+  "version": "1.4.6",
+  "versionCode": 12,
+  "apkUrl": "http://140.245.1.42/downloads/bio-attendance.apk",
+  "notes": "All logos are now transparent (no white box behind the crest) on the launch screen and the login page, and the app has a new launcher icon.",
+  "force": false
+}

@@ -346,14 +346,23 @@ export function deleteStudent(id: number): Promise<ManageResult> {
   return manageAction({ action: 'delete_student', id });
 }
 
-/** Bulk-import students from a CSV (class, rollno, name). */
-export async function bulkUploadStudents(file: {
-  uri: string;
-  name: string;
-  type: string;
-}): Promise<ManageResult> {
+/** Bulk-delete (deactivate) students, optionally limited to the given classes; omit/empty = all classes. */
+export function bulkDeleteStudents(opts: { classes?: string[]; all?: boolean } = {}): Promise<ManageResult> {
+  return manageAction({
+    action: 'bulk_delete_students',
+    classes: opts.classes && opts.classes.length ? opts.classes : undefined,
+    all: opts.all ? 1 : 0,
+  });
+}
+
+/** Bulk-import students from a CSV or Excel file (name, reg number, class, section, WhatsApp number). */
+export async function bulkUploadStudents(
+  file: { uri: string; name: string; type: string },
+  opts: { flush?: boolean } = {}
+): Promise<ManageResult> {
   const form = new FormData();
   form.append('action', 'bulk_upload');
+  if (opts.flush) form.append('flush', '1');
   form.append('csv_file', {
     uri: file.uri,
     name: file.name,
@@ -468,6 +477,7 @@ export async function pageUri(slug: string): Promise<string> {
     reports: role === 'admin' ? '/admin_reports.php' : '/reports.php',
     dashboard: role === 'admin' ? '/admin_dashboard.php' : '/teacher_dashboard.php',
     staff_dashboard: '/staff_dashboard.php',
+    notifications: '/notifications-admin.html',
   };
   return base + (map[slug] || `/${slug}.php`);
 }
@@ -481,6 +491,7 @@ export function pageTitle(slug: string): string {
     manage: 'Manage',
     export: 'Export Data',
     dashboard: 'Dashboard',
+    notifications: 'Send App Notification',
   };
   return titles[slug] || slug;
 }

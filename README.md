@@ -13,7 +13,7 @@ website (`attendance.spscsialkot.com`) in a fast, design-led native shell — sa
 ![React Native](https://img.shields.io/badge/React%20Native-0.74-61DAFB?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?logo=typescript&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white)
-![Version](https://img.shields.io/badge/Version-1.3.1-2D6CDF)
+![Version](https://img.shields.io/badge/Version-1.4.6-2D6CDF)
 
 </div>
 
@@ -56,9 +56,9 @@ notices and the Notify-Parents queue — lives in [`SCREENSHOTS.md`](SCREENSHOTS
 | **Face Attendance** | Fully on-device face check-in — enroll a student with three camera samples, then point the camera at the class. Enrolled faces are matched locally and only the recognised roll numbers are sent to `face/mark`; on finish, students who were not recognised can be marked absent in one step |
 | **Notify Parents** | After a save with non-compliant students, opens a **Notify Parents** screen: per-student WhatsApp messages (`wa.me` deep links), a sequential batch queue that auto-advances on app resume, sent/pending states, and an add-number shortcut for students without a number on file |
 | **WhatsApp numbers** | Stored **on-device** (SecureStore, keyed by `class:roll`) and normalized to E.164-ish `+92…` — editable from every entry card, Manage Students, and the Notify screen |
-| **Manage Students / Teachers** | Native admin tools — search, class filters, add / edit / deactivate students and teachers via `manage/action` |
+| **Manage Students / Teachers** | Native admin tools — search, class filters, add / edit / deactivate students and teachers via `manage/action`, plus **bulk delete** of every student of one or more classes |
 | **Reports** | Fully native rendering of the site's reports — **Daily / Weekly / Monthly / Student-wise / Teacher-wise** with per-checkpoint compliance bars and ✓/✗/— records tables; CSV export via the WebView pages `export.php` / `admin_export.php` |
-| **Bulk Upload** | Native CSV picker → multipart upload to `manage/upload` with per-row result feedback |
+| **Bulk Upload** | Native Excel/CSV picker → multipart upload to `manage/upload` (columns: name, reg number, class, section, WhatsApp number) with per-row result feedback. Sections are folded into the class key (**5 + Red → 5R**) and created on the fly, and an optional **flush** replaces the whole previous roster in one import |
 | **Audit Trail** | `audit` (admin only) — secret entry timestamps, class/teacher/date filters, on-time vs late detection |
 | **Profile** | Avatar, full name, assigned class, late-warning count (admin: audit late/backdated + late rate), logout |
 
@@ -245,6 +245,24 @@ cd android
 The release is signed with the local `android/app/debug.keystore` (same key as the previous sideload builds), so
 it installs straight over an existing copy. If you change an Expo config plugin or the permission list, run
 `npx expo prebuild --platform android` first, then rebuild.
+
+### APK size (~39 MB)
+
+Teachers download every update over the school connection, so the release APK is kept lean. Most of what is left
+is native code:
+
+- `expo.useLegacyPackaging=true` (`android/gradle.properties`) compresses the `.so` files — stored uncompressed
+they alone were ~57 MB of the ~80 MB APK.
+- expo-camera's unused ML Kit barcode scanner (`libbarhopper_v3.so`, ~7 MB across both ABIs) is excluded in
+`android/app/build.gradle`; the app never passes `barcodeScannerSettings`, so expo-camera never builds that analyzer.
+- **Do not** remove `libtensorflowlite_gpu_jni.so` — fast-tflite's `libVisionCameraTflite.so` declares it as a
+`NEEDED` library, and the face model would stop loading.
+- Import icons as `@expo/vector-icons/Ionicons`, not the `@expo/vector-icons` barrel (which bundles all 24 icon
+fonts, ~3.4 MB). After changing icon imports, delete
+`android/app/build/generated/res/createBundleReleaseJsAndAssets` first — otherwise stale font assets stay in the APK.
+
+Face recognition is untouched: ML Kit face detection, the bundled 5.2 MB MobileFaceNet model and the TFLite CPU
+delegate all still ship, and the build signed with the same key installs over the previous version.
 
 > On this machine the default `JAVA_HOME` points at a dead path (`/Users/app/jdk/17`) — prefix Gradle with
 > `JAVA_HOME=/Users/app/Library/Java/JavaVirtualMachines/jbr-17.0.14/Contents/Home`.

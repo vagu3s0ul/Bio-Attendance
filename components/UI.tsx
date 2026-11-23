@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, FONT, RADIUS, SHADOW, SPACING } from '@/constants/theme';
 
 /**
@@ -151,6 +151,8 @@ export function QuickTile({
   dot = false,
   onPress,
   columns = 3,
+  centered = false,
+  titleLines,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
@@ -161,8 +163,11 @@ export function QuickTile({
   dot?: boolean;
   onPress: () => void;
   columns?: 2 | 3;
+  centered?: boolean;
+  titleLines?: number;
 }) {
   const compact = columns === 3;
+  const lines = titleLines ?? (centered ? 2 : 1);
   return (
     <Pressable
       onPress={onPress}
@@ -174,7 +179,7 @@ export function QuickTile({
       accessibilityRole="button"
       accessibilityLabel={title}
     >
-      <View style={styles.quickTop}>
+      <View style={[styles.quickTop, centered && styles.quickTopCentered]}>
         <IconTile icon={icon} tone={tone} size={compact ? 42 : 40} radius={13} />
         {badge ? <Pill label={badge} tone={badgeTone} /> : null}
         {dot ? <View style={styles.dot} /> : null}
@@ -182,11 +187,20 @@ export function QuickTile({
           <Ionicons name="arrow-forward" size={17} color={COLORS.textFaint} />
         ) : null}
       </View>
-      <Text style={compact ? styles.quickTitleCompact : styles.quickTitle} numberOfLines={1}>
+      <Text
+        style={[
+          compact ? styles.quickTitleCompact : styles.quickTitle,
+          centered && styles.quickTitleCentered,
+        ]}
+        numberOfLines={lines}
+      >
         {title}
       </Text>
       {subtitle ? (
-        <Text style={styles.quickSub} numberOfLines={compact ? 1 : 2}>
+        <Text
+          style={[styles.quickSub, centered && styles.quickSubCentered]}
+          numberOfLines={centered ? 2 : compact ? 1 : 2}
+        >
           {subtitle}
         </Text>
       ) : null}
@@ -322,6 +336,9 @@ const styles = StyleSheet.create({
     ...SHADOW.card,
   },
   quickTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  quickTopCentered: { justifyContent: 'center' },
+  quickTitleCentered: { textAlign: 'center' },
+  quickSubCentered: { textAlign: 'center' },
   quickTitle: { fontSize: 14.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
   quickTitleCompact: { fontSize: 12.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
   quickSub: { fontSize: 11.5, color: COLORS.textMuted, fontFamily: FONT.regular, lineHeight: 15 },

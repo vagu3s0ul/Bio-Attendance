@@ -9,7 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import Screen from '@/components/Screen';
 import Card from '@/components/Card';
 import StatCard from '@/components/StatCard';

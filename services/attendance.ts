@@ -7,6 +7,7 @@
  * expose the Status column yet, keyed by class + date.
  */
 import * as SecureStore from 'expo-secure-store';
+import { registerAttClass } from './backup';
 
 function keyOf(className: string): string {
   // SecureStore keys only allow [a-zA-Z0-9._-]; sanitize like other stores.
@@ -39,6 +40,7 @@ export async function setAbsentRolls(
     const map = raw ? (JSON.parse(raw) as Record<string, string[]>) : {};
     map[date] = rolls;
     await SecureStore.setItemAsync(keyOf(className), JSON.stringify(map));
+    await registerAttClass(className);
   } catch {
     // non-fatal
   }

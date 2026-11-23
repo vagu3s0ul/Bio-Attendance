@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   Alert,
   RefreshControl,
@@ -14,8 +14,7 @@ import AppBar from '@/components/AppBar';
 import AdminHome from '@/components/home/AdminHome';
 import TeacherHome from '@/components/home/TeacherHome';
 import AccountantHome from '@/components/home/AccountantHome';
-import PrincipalHome from '@/components/home/PrincipalHome';
-import SectionHeadHome from '@/components/home/SectionHeadHome';
+import HeadsHome from '@/components/home/HeadsHome';
 import { COLORS, FONT, RADIUS, SPACING } from '@/constants/theme';
 import { fetchHome } from '@/services/api';
 import { useSession } from '@/store/session';
@@ -33,6 +32,7 @@ export default function HomeScreen() {
   const { user, signOut } = useSession();
   const [data, setData] = useState<HomeData | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
 
   const load = useCallback(
     async (asRefresh = false) => {
@@ -153,12 +153,23 @@ export default function HomeScreen() {
     );
   }
 
-  // Principal / Section Head (new UI)
+  // Principal / Section Head (new UI) — tabbed home shell: Overview,
+  // Attendance, Classes, Notices. The shell scrolls the home back to the
+  // top whenever the tab changes.
+  const headStats =
+    data && (data.role === 'principal' || data.role === 'section_head')
+      ? data.stats
+      : undefined;
+  const headClasses =
+    data && (data.role === 'principal' || data.role === 'section_head')
+      ? data.classes
+      : undefined;
   if (role === 'principal' || role === 'section_head') {
     return (
       <Screen>
         <AppBar />
         <ScrollView
+          ref={scrollRef}
           style={styles.scroll}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
@@ -170,19 +181,13 @@ export default function HomeScreen() {
             />
           }
         >
-          {role === 'principal' ? (
-            <PrincipalHome
-              stats={data && data.role === 'principal' ? data.stats : undefined}
-              classes={data && data.role === 'principal' ? data.classes : undefined}
-              onSync={() => load(true)}
-            />
-          ) : (
-            <SectionHeadHome
-              stats={data && data.role === 'section_head' ? data.stats : undefined}
-              classes={data && data.role === 'section_head' ? data.classes : undefined}
-              onSync={() => load(true)}
-            />
-          )}
+          <HeadsHome
+            role={role}
+            stats={headStats}
+            classes={headClasses}
+            onSync={() => load(true)}
+            onTabChange={() => scrollRef.current?.scrollTo({ y: 0, animated: false })}
+          />
         </ScrollView>
       </Screen>
     );

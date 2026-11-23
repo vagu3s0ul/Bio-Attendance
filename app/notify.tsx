@@ -20,7 +20,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Screen from '@/components/Screen';
 import Card from '@/components/Card';
@@ -244,7 +244,7 @@ export default function NotifyScreen() {
 
   if (rows.length === 0) {
     return (
-      <Screen edges={[]}>
+      <Screen>
         <View style={styles.center}>
           <Text style={styles.centerTitle}>Nothing to notify</Text>
           <Text style={styles.centerBody}>
@@ -259,7 +259,7 @@ export default function NotifyScreen() {
   }
 
   return (
-    <Screen edges={[]}>
+    <Screen>
       <View style={styles.headerBar}>
         <Text style={[styles.headerTitle, LABEL_CAPS]}>Notify Parents</Text>
         <Text style={styles.headerSub}>
@@ -480,13 +480,13 @@ const styles = StyleSheet.create({
   },
   checkOn: { backgroundColor: COLORS.primary },
   checkDisabled: { borderColor: COLORS.outline, backgroundColor: COLORS.surfaceHigh },
-  selectAllText: { fontSize: 13, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.primary },
+  selectAllText: { fontSize: 13, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.primary },
   rowCard: { padding: 12 },
   rowSent: { opacity: 0.65 },
   rowMain: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   rowBody: { flex: 1 },
   rowNameLine: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  rowName: { fontSize: 15, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text, flexShrink: 1 },
+  rowName: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text, flexShrink: 1 },
   rowRoll: { fontSize: 11.5, color: COLORS.textMuted, fontFamily: FONT.regular },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
   tag: {
@@ -496,15 +496,15 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   tagGrey: { backgroundColor: COLORS.surfaceLow },
-  tagText: { fontSize: 10.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.danger },
+  tagText: { fontSize: 10.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.danger },
   tagAbsent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  tagAbsentText: { fontSize: 10.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.danger },
+  tagAbsentText: { fontSize: 10.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.danger },
   sentBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  sentText: { fontSize: 11.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.compliant },
+  sentText: { fontSize: 11.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.compliant },
   sendBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.compliant,
     backgroundColor: COLORS.surface,
   },
-  sendBtnText: { fontSize: 12, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.compliant },
+  sendBtnText: { fontSize: 12, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.compliant },
   greyCard: { padding: 12, backgroundColor: COLORS.surfaceLow },
   greyTitle: { color: COLORS.textFaint, marginTop: 6 },
   greyText: { color: COLORS.textFaint },
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
     backgroundColor: COLORS.surface,
   },
-  addNumText: { fontSize: 11.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.primary },
+  addNumText: { fontSize: 11.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.primary },
   bottomBar: {
     position: 'absolute',
     left: 0,
@@ -554,10 +554,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.compliant,
   },
   batchBtnDisabled: { opacity: 0.4 },
-  batchBtnText: { color: '#fff', fontSize: 14, fontFamily: FONT.medium, fontWeight: '600' },
+  batchBtnText: { color: '#fff', fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400' },
   pressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 8 },
-  centerTitle: { fontSize: 17, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  centerTitle: { fontSize: 17, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   centerBody: { fontSize: 13, color: COLORS.textMuted, textAlign: 'center', fontFamily: FONT.regular, lineHeight: 19 },
   doneBtn: {
     marginTop: 10,
@@ -568,5 +568,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  doneBtnText: { color: '#fff', fontSize: 14, fontFamily: FONT.medium, fontWeight: '600' },
+  doneBtnText: { color: '#fff', fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400' },
 });

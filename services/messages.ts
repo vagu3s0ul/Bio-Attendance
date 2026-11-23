@@ -54,7 +54,7 @@ export function buildFeeMessage(opts: {
   const total = opts.total ?? 0;
   const paid = opts.paid ?? 0;
   let body =
-    `Dear parent, the school fee for ${prettyMonth(opts.month)} of your ward ` +
+    `ٱلسَّلَامُ عَلَيْكُمْ Dear parent, the school fee for ${prettyMonth(opts.month)} of your ward ` +
     `${opts.studentName} (Roll ${opts.roll}, Class ${opts.className}) is pending. `;
 
   if (total > 0) {
@@ -85,7 +85,7 @@ export function buildUniformDefaulterMessage(opts: {
   const items = joinFailedItems(opts.failedItems) || 'the required uniform';
   const days = opts.days > 0 ? `${opts.days} day(s) ` : '';
   return (
-    `Dear parent, your ward ${opts.studentName} (Roll ${opts.roll}, Class ${opts.className}) ` +
+    `ٱلسَّلَامُ عَلَيْكُمْ Dear parent, your ward ${opts.studentName} (Roll ${opts.roll}, Class ${opts.className}) ` +
     `was found without ${items} on ${days}between ${prettyRange(opts.from, opts.to)}. ` +
     `Kindly ensure this is corrected. — ${opts.schoolName || SCHOOL_NAME}`
   );
@@ -103,7 +103,7 @@ export function buildAbsentRangeMessage(opts: {
 }): string {
   const days = opts.days > 0 ? `${opts.days} day(s) ` : '';
   return (
-    `Dear parent, your ward ${opts.studentName} (Roll ${opts.roll}, Class ${opts.className}) ` +
+    `ٱلسَّلَامُ عَلَيْكُمْ Dear parent, your ward ${opts.studentName} (Roll ${opts.roll}, Class ${opts.className}) ` +
     `was marked absent on ${days}between ${prettyRange(opts.from, opts.to)}. ` +
     `Please contact the school regarding these absences. — ${opts.schoolName || SCHOOL_NAME}`
   );

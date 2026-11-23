@@ -28,7 +28,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as FileSystem from 'expo-file-system';
@@ -1116,8 +1116,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   titles: { flex: 1 },
-  title: { fontSize: 15, fontFamily: FONT.bold, fontWeight: '700', color: M3.onSurface },
-  titleSection: { fontSize: 13, fontFamily: FONT.medium, fontWeight: '600', color: M3.primary },
+  title: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: M3.onSurface },
+  titleSection: { fontSize: 13, fontFamily: FONT.regular, fontWeight: '400', color: M3.primary },
   titleDot: { fontSize: 13, color: M3.outline },
   sub: { fontSize: 11, color: M3.onSurfaceVariant, marginTop: 1, fontFamily: FONT.regular },
   bell: {
@@ -1147,7 +1147,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontSize: 14, fontFamily: FONT.bold, fontWeight: '700', color: M3.onPrimary },
+  avatarText: { fontSize: 14, fontFamily: FONT.regular, fontWeight: '400', color: M3.onPrimary },
 
   // Header row
   headerRow: {
@@ -1160,8 +1160,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontFamily: FONT.bold,
-    fontWeight: '700',
+    fontFamily: FONT.display,
+    fontWeight: '300',
     color: M3.onSurface,
     letterSpacing: -0.3,
   },
@@ -1175,7 +1175,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  syncText: { fontSize: 12, fontFamily: FONT.medium, fontWeight: '600', color: M3.onSurface },
+  syncText: { fontSize: 12, fontFamily: FONT.regular, fontWeight: '400', color: M3.onSurface },
 
   // Tabs
   tabScroll: { flexGrow: 0 },
@@ -1190,7 +1190,7 @@ const styles = StyleSheet.create({
     backgroundColor: M3.surfaceContainerLow,
   },
   tabActive: { backgroundColor: M3.primaryContainer },
-  tabText: { fontSize: 12, fontFamily: FONT.medium, fontWeight: '600', color: M3.onSurfaceVariant },
+  tabText: { fontSize: 12, fontFamily: FONT.regular, fontWeight: '400', color: M3.onSurfaceVariant },
   tabTextActive: { color: M3.onPrimary },
   tabBadge: {
     minWidth: 20,
@@ -1202,7 +1202,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabBadgeActive: { backgroundColor: M3.error },
-  tabBadgeText: { fontSize: 11, fontFamily: FONT.bold, fontWeight: '700', color: M3.onSurfaceVariant },
+  tabBadgeText: { fontSize: 11, fontFamily: FONT.regular, fontWeight: '400', color: M3.onSurfaceVariant },
   tabBadgeTextActive: { color: M3.onError },
 
   // List
@@ -1228,7 +1228,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bigCheckOn: { backgroundColor: M3.primary, borderColor: M3.primary },
-  selectTitle: { fontSize: 14, fontFamily: FONT.medium, fontWeight: '600', color: M3.onSurface },
+  selectTitle: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: M3.onSurface },
   selectSub: { fontSize: 12, color: M3.onSurfaceVariant, marginTop: 1, fontFamily: FONT.regular },
   iconBtn: {
     width: 40,
@@ -1260,7 +1260,7 @@ const styles = StyleSheet.create({
 
   // Empty
   emptyCard: { alignItems: 'center', gap: 6, paddingVertical: 24, paddingHorizontal: 16 },
-  emptyTitle: { fontSize: 15, fontFamily: FONT.medium, fontWeight: '600', color: M3.onSurface },
+  emptyTitle: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: M3.onSurface },
   emptyBody: {
     fontSize: 12,
     color: M3.onSurfaceVariant,
@@ -1278,7 +1278,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
-  emptyBtnText: { color: M3.onPrimary, fontSize: 12, fontFamily: FONT.medium, fontWeight: '600' },
+  emptyBtnText: { color: M3.onPrimary, fontSize: 12, fontFamily: FONT.regular, fontWeight: '400' },
 
   // Student card
   rowCard: {
@@ -1312,16 +1312,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rowAvatarText: { fontSize: 15, fontFamily: FONT.bold, fontWeight: '700', color: M3.onSurfaceVariant },
+  rowAvatarText: { fontSize: 15, fontFamily: FONT.regular, fontWeight: '400', color: M3.onSurfaceVariant },
   rowNameLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  rowName: { flexShrink: 1, fontSize: 14, fontFamily: FONT.medium, fontWeight: '600', color: M3.onSurface },
+  rowName: { flexShrink: 1, fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: M3.onSurface },
   rollChip: {
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     backgroundColor: M3.surfaceContainerHigh,
   },
-  rollChipText: { fontSize: 10, fontFamily: FONT.bold, fontWeight: '700', color: M3.onSurfaceVariant },
+  rollChipText: { fontSize: 10, fontFamily: FONT.regular, fontWeight: '400', color: M3.onSurfaceVariant },
   rowClass: { fontSize: 12, color: M3.onSurfaceVariant, marginTop: 2, fontFamily: FONT.regular },
 
   // Status chips
@@ -1340,7 +1340,7 @@ const styles = StyleSheet.create({
   chipTertiary: { backgroundColor: M3.tertiaryFixed },
   chipLow: { backgroundColor: M3.surfaceContainerLow },
   chipHigh: { backgroundColor: M3.surfaceContainerHigh },
-  statChipText: { fontSize: 12, fontFamily: FONT.medium, fontWeight: '600' },
+  statChipText: { fontSize: 12, fontFamily: FONT.regular, fontWeight: '400' },
   chipTextError: { color: M3.onErrorContainer },
   chipTextTertiary: { color: M3.onTertiaryFixed },
   chipTextLow: { color: M3.onSurfaceVariant },
@@ -1368,14 +1368,14 @@ const styles = StyleSheet.create({
     fontSize: 10,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
-    fontFamily: FONT.medium,
-    fontWeight: '600',
+    fontFamily: FONT.regular,
+    fontWeight: '400',
     color: M3.onSurfaceVariant,
   },
   contactNumber: {
-    fontSize: 14,
-    fontFamily: FONT.medium,
-    fontWeight: '600',
+    fontSize: 13.5,
+    fontFamily: FONT.regular,
+    fontWeight: '400',
     color: M3.onSurface,
     marginTop: 1,
   },
@@ -1388,7 +1388,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: M3.surfaceContainerHighest,
   },
-  contactChipText: { fontSize: 11, fontFamily: FONT.medium, fontWeight: '600' },
+  contactChipText: { fontSize: 11, fontFamily: FONT.regular, fontWeight: '400' },
   contactChipTextOn: { color: M3.secondary },
   contactChipTextAdd: { color: M3.primary },
 
@@ -1404,7 +1404,7 @@ const styles = StyleSheet.create({
     borderColor: M3.primary,
     backgroundColor: M3.surfaceContainerLowest,
   },
-  manageBtnText: { color: M3.primary, fontSize: 13, fontFamily: FONT.medium, fontWeight: '600' },
+  manageBtnText: { color: M3.primary, fontSize: 13, fontFamily: FONT.regular, fontWeight: '400' },
 
   // Sticky action bar
   actionWrap: {
@@ -1436,7 +1436,7 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: M3.whatsapp,
   },
-  waBtnText: { color: '#fff', fontSize: 14, fontFamily: FONT.medium, fontWeight: '600' },
+  waBtnText: { color: '#fff', fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400' },
   scheduleBtn: {
     height: 48,
     paddingHorizontal: 16,
@@ -1447,7 +1447,7 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: M3.surfaceContainerHigh,
   },
-  scheduleBtnText: { fontSize: 12, fontFamily: FONT.medium, fontWeight: '600', color: M3.onSurface },
+  scheduleBtnText: { fontSize: 12, fontFamily: FONT.regular, fontWeight: '400', color: M3.onSurface },
   btnOff: { opacity: 0.45 },
   queueRow: {
     flex: 1,
@@ -1478,7 +1478,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 12,
   },
-  toastTitle: { color: M3.onPrimary, fontSize: 13, fontFamily: FONT.medium, fontWeight: '600' },
+  toastTitle: { color: M3.onPrimary, fontSize: 13, fontFamily: FONT.regular, fontWeight: '400' },
   toastSub: { color: 'rgba(255,255,255,0.85)', fontSize: 11, marginTop: 1, fontFamily: FONT.regular },
 
   // Modals
@@ -1495,11 +1495,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 4,
   },
-  modalTitle: { fontSize: 17, fontFamily: FONT.bold, fontWeight: '700', color: M3.onSurface },
+  modalTitle: { fontSize: 17, fontFamily: FONT.regular, fontWeight: '400', color: M3.onSurface },
   modalLabel: {
     fontSize: 12,
-    fontFamily: FONT.medium,
-    fontWeight: '600',
+    fontFamily: FONT.regular,
+    fontWeight: '400',
     color: M3.onSurfaceVariant,
     marginTop: 6,
   },
@@ -1515,7 +1515,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chipActive: { backgroundColor: M3.primaryContainer },
-  chipText: { fontSize: 12, fontFamily: FONT.medium, fontWeight: '600', color: M3.onSurfaceVariant },
+  chipText: { fontSize: 12, fontFamily: FONT.regular, fontWeight: '400', color: M3.onSurfaceVariant },
   chipTextActive: { color: M3.onPrimary },
   modalDone: {
     alignItems: 'center',
@@ -1524,7 +1524,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: M3.primary,
   },
-  modalDoneText: { color: M3.onPrimary, fontSize: 14, fontFamily: FONT.medium, fontWeight: '600' },
+  modalDoneText: { color: M3.onPrimary, fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400' },
   modalBody: { fontSize: 12, color: M3.onSurfaceVariant, lineHeight: 17, fontFamily: FONT.regular },
   scheduledBox: { marginTop: 4, gap: 4 },
   scheduledRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -1537,7 +1537,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: M3.surfaceContainerLow,
   },
-  modalCancelText: { fontSize: 13, fontFamily: FONT.medium, fontWeight: '600', color: M3.onSurfaceVariant },
+  modalCancelText: { fontSize: 13, fontFamily: FONT.regular, fontWeight: '400', color: M3.onSurfaceVariant },
   modalConfirm: {
     flex: 1,
     alignItems: 'center',
@@ -1546,6 +1546,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: M3.primary,
   },
-  modalConfirmText: { fontSize: 13, fontFamily: FONT.medium, fontWeight: '600', color: M3.onPrimary },
+  modalConfirmText: { fontSize: 13, fontFamily: FONT.regular, fontWeight: '400', color: M3.onPrimary },
   pressed: { opacity: 0.9 },
 });

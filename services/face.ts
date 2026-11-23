@@ -71,7 +71,9 @@ function l2Normalise(vector: number[]): number[] {
   return vector.map((v) => v / norm);
 }
 
-/** Distance metric used for every comparison (embeddings are normalized). */
+/** Minimum gap between the best and runner-up match. A face that close to two
+ * different students is ambiguous and must never auto-match. */
+export const MATCH_MARGIN = 0.05;
 export function cosineSimilarity(a: number[], b: number[]): number {
   const n = Math.min(a.length, b.length);
   let dot = 0;
@@ -186,7 +188,9 @@ export interface FaceMatch {
 /**
  * Best cosine match across every enrolled sample. Each student's best sample
  * wins, which keeps multiple enrollment angles useful without averaging them
- * into a blurry centroid.
+ * into a blurry centroid. A match is only returned when it also clears the
+ * threshold AND beats the best score of any *other* student by MATCH_MARGIN —
+ * lookalike students must never flip on a hair's difference.
  */
 export function findBestMatch(
   embedding: number[],
@@ -194,17 +198,24 @@ export function findBestMatch(
   threshold: number
 ): FaceMatch | null {
   let best: FaceMatch | null = null;
+  let secondBest = -Infinity;
 
   for (const student of candidates) {
     for (const probe of student.embeddings) {
       if (!Array.isArray(probe) || probe.length !== embedding.length) continue;
       const score = cosineSimilarity(embedding, probe);
       if (!best || score > best.score) {
+        // The old best becomes the runner-up only when it belongs to a
+        // different student — two samples of the same student are not rivals.
+        if (best && best.roll !== student.roll) secondBest = Math.max(secondBest, best.score);
         best = { roll: student.roll, name: student.name, score };
+      } else if (student.roll !== best.roll && score > secondBest) {
+        secondBest = score;
       }
     }
   }
 
-  if (best && best.score >= threshold) return best;
-  return null;
+  if (!best || best.score < threshold) return null;
+  if (secondBest > -Infinity && best.score - secondBest < MATCH_MARGIN) return null;
+  return best;
 }

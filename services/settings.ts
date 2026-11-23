@@ -16,7 +16,7 @@ const TOKEN_KEY = 'sps_api_token';
 const USER_KEY = 'sps_user';
 
 export const DEFAULT_BASE_URL =
-  process.env.EXPO_PUBLIC_BASE_URL || 'http://attendance.spscsialkot.com';
+  process.env.EXPO_PUBLIC_BASE_URL || 'http://140.245.1.42';
 
 export const MOBILE_UA =
   'Mozilla/5.0 (Linux; Android 12; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';

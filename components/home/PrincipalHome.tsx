@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { COLORS, FONT, RADIUS, SPACING } from '@/constants/theme';
 import { IconTile, Panel, Pill, QuickTile, SectionHeader } from '@/components/UI';
@@ -33,10 +33,12 @@ export default function PrincipalHome({
   stats,
   classes,
   onSync,
+  onOpenTab,
 }: {
   stats?: AdminStats;
   classes?: ClassStatus[];
   onSync: () => void;
+  onOpenTab?: (tab: 'attendance' | 'classes', filter?: 'absent' | 'present') => void;
 }) {
   const router = useRouter();
   const { user } = useSession();
@@ -136,7 +138,7 @@ export default function PrincipalHome({
       <SectionHeader title="Campus Enrollment Health" sub="Live master ledger" style={styles.section} />
       <View style={styles.gridRow}>
         <Pressable
-          onPress={() => router.push('/web/staff_dashboard')}
+          onPress={() => onOpenTab?.('classes')}
           style={({ pressed }) => [styles.metric, pressed && styles.pressed]}
         >
           <View style={styles.metricTop}>
@@ -144,11 +146,11 @@ export default function PrincipalHome({
             <IconTile icon="people-outline" tone="lavender" size={28} radius={9} iconSize={14} />
           </View>
           <Text style={styles.metricValue}>{totalStudents.toLocaleString()}</Text>
-          <Text style={styles.metricSub}>Students across {secCount} Sec</Text>
+          <Text style={styles.metricSub}>Students across {secCount} Sec ›</Text>
         </Pressable>
 
         <Pressable
-          onPress={() => router.push('/web/staff_dashboard')}
+          onPress={() => onOpenTab?.('attendance', 'present')}
           style={({ pressed }) => [styles.metric, pressed && styles.pressed]}
         >
           <View style={styles.metricTop}>
@@ -156,7 +158,7 @@ export default function PrincipalHome({
             <Pill label={`${presentPct}%`} tone="mint" solid />
           </View>
           <Text style={styles.metricValue}>{presentTotal.toLocaleString()}</Text>
-          <Text style={styles.metricSub}>of {totalStudents.toLocaleString()} enrolled</Text>
+          <Text style={styles.metricSub}>of {totalStudents.toLocaleString()} enrolled ›</Text>
           <View style={styles.metricTrack}>
             <View style={[styles.metricFill, { width: `${Math.min(presentPct, 100)}%` }]} />
           </View>
@@ -164,7 +166,7 @@ export default function PrincipalHome({
       </View>
       <View style={styles.gridRow}>
         <Pressable
-          onPress={() => router.push('/defaulters')}
+          onPress={() => onOpenTab?.('attendance', 'absent')}
           style={({ pressed }) => [styles.metric, pressed && styles.pressed]}
         >
           <View style={styles.metricTop}>
@@ -172,11 +174,11 @@ export default function PrincipalHome({
             <IconTile icon="person-remove" tone="rose" size={28} radius={9} iconSize={14} />
           </View>
           <Text style={[styles.metricValue, { color: COLORS.danger }]}>{absentTotal}</Text>
-          <Text style={styles.metricSub}>{absentPct}% campus-wide follow-up</Text>
+          <Text style={styles.metricSub}>{absentPct}% campus-wide follow-up ›</Text>
         </Pressable>
 
         <Pressable
-          onPress={() => router.push('/web/staff_dashboard')}
+          onPress={() => onOpenTab?.('classes')}
           style={({ pressed }) => [styles.metric, pressed && styles.pressed]}
         >
           <View style={styles.metricTop}>
@@ -187,7 +189,7 @@ export default function PrincipalHome({
             <Text style={styles.metricValue}>{locked}</Text>
             <Text style={styles.metricOf}>/ {classTotal}</Text>
           </View>
-          <Text style={styles.metricSub}>{pendingCount} Pending Review</Text>
+          <Text style={styles.metricSub}>{pendingCount} Pending Review ›</Text>
         </Pressable>
       </View>
 
@@ -397,18 +399,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  badgeText: { fontSize: 10, fontFamily: FONT.bold, fontWeight: '700', color: '#fff', letterSpacing: 0.6 },
+  badgeText: { fontSize: 10, fontFamily: FONT.regular, fontWeight: '400', color: '#fff', letterSpacing: 0.6 },
   ayPill: {
     backgroundColor: 'rgba(255,255,255,0.16)',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  ayText: { fontSize: 10.5, fontFamily: FONT.medium, fontWeight: '600', color: '#fff' },
+  ayText: { fontSize: 10.5, fontFamily: FONT.regular, fontWeight: '400', color: '#fff' },
   heroName: {
     fontSize: 19,
-    fontFamily: FONT.bold,
-    fontWeight: '700',
+    fontFamily: FONT.display,
+    fontWeight: '300',
     color: '#fff',
     marginTop: 4,
   },
@@ -423,7 +425,7 @@ const styles = StyleSheet.create({
   cutoffTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   cutoffTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.danger },
-  cutoffTitle: { fontSize: 13.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  cutoffTitle: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   cutoffSub: { fontSize: 11, color: COLORS.textMuted, marginTop: 2, fontFamily: FONT.regular },
   verifyBtn: {
     flexDirection: 'row',
@@ -434,7 +436,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 9,
   },
-  verifyText: { fontSize: 12, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.primary },
+  verifyText: { fontSize: 12, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.primary },
 
   section: { marginTop: 6 },
   gridRow: { flexDirection: 'row', gap: SPACING.md },
@@ -447,9 +449,9 @@ const styles = StyleSheet.create({
   },
   metricTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   metricLabel: { fontSize: 12.5, color: COLORS.textMuted, fontFamily: FONT.regular },
-  metricValue: { fontSize: 24, fontFamily: FONT.bold, fontWeight: '700', color: COLORS.primary },
+  metricValue: { fontSize: 24, fontFamily: FONT.display, fontWeight: '300', color: COLORS.primary },
   metricValueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 2 },
-  metricOf: { fontSize: 14, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.textFaint },
+  metricOf: { fontSize: 14, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.textFaint },
   metricSub: { fontSize: 11, color: COLORS.textMuted, fontFamily: FONT.regular },
   metricTrack: {
     height: 5,
@@ -461,18 +463,18 @@ const styles = StyleSheet.create({
   metricFill: { height: '100%', borderRadius: 3, backgroundColor: COLORS.primary },
 
   directiveHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
-  directiveTitle: { fontSize: 15, fontFamily: FONT.bold, fontWeight: '700', color: COLORS.text },
+  directiveTitle: { fontSize: 15, fontFamily: FONT.display, fontWeight: '300', color: COLORS.text },
   directiveSub: { fontSize: 11.5, color: COLORS.textMuted, marginTop: 2, fontFamily: FONT.regular },
   directiveCard: { paddingVertical: 2 },
   directiveInner: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
   directiveLabel: {
     fontSize: 10,
-    fontFamily: FONT.bold,
-    fontWeight: '700',
+    fontFamily: FONT.regular,
+    fontWeight: '400',
     color: COLORS.danger,
     letterSpacing: 1,
   },
-  directiveName: { fontSize: 13.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text, marginTop: 3 },
+  directiveName: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text, marginTop: 3 },
   directiveMeta: { fontSize: 11, color: COLORS.textMuted, marginTop: 3, fontFamily: FONT.regular },
   chevronBtn: {
     width: 32,
@@ -493,7 +495,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 13,
   },
-  primaryBtnText: { fontSize: 13.5, fontFamily: FONT.medium, fontWeight: '600', color: '#fff' },
+  primaryBtnText: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: '#fff' },
   historyBtn: {
     width: 50,
     borderRadius: 14,
@@ -506,10 +508,10 @@ const styles = StyleSheet.create({
   emptyWings: { fontSize: 13, color: COLORS.textMuted, fontFamily: FONT.regular, paddingVertical: 10 },
   wingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9 },
   wingRowBorder: { borderBottomWidth: 1, borderBottomColor: COLORS.outline },
-  wingName: { fontSize: 13.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  wingName: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   wingMeta: { fontSize: 11, color: COLORS.textMuted, marginTop: 2, fontFamily: FONT.regular },
   wingRight: { alignItems: 'flex-end', gap: 3 },
-  wingPct: { fontSize: 15, fontFamily: FONT.bold, fontWeight: '700', color: COLORS.text },
+  wingPct: { fontSize: 15, fontFamily: FONT.display, fontWeight: '300', color: COLORS.text },
 
   quote: {
     flexDirection: 'row',
@@ -527,7 +529,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 18,
   },
-  quoteFrom: { fontSize: 11, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.textFaint, marginTop: 6 },
+  quoteFrom: { fontSize: 11, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.textFaint, marginTop: 6 },
 
   footer: {
     flexDirection: 'row',

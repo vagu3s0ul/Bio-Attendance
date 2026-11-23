@@ -17,7 +17,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { useRouter } from 'expo-router';
@@ -316,7 +316,7 @@ export default function FeeDuesScreen() {
 
   return (
     <AdminOnly allow={['admin', 'accountant', 'teacher']}>
-      <Screen edges={[]}>
+      <Screen>
         <AppBar />
         <View style={styles.headerBar}>
           <View style={{ flex: 1 }}>
@@ -528,8 +528,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 21,
-    fontFamily: FONT.bold,
-    fontWeight: '700',
+    fontFamily: FONT.display,
+    fontWeight: '300',
     color: COLORS.text,
     letterSpacing: -0.4,
   },
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     backgroundColor: COLORS.primarySoft,
   },
-  bulkBtnText: { fontSize: 12, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.primaryDeep },
+  bulkBtnText: { fontSize: 12, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.primaryDeep },
   importBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -598,20 +598,20 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
     backgroundColor: COLORS.surface,
   },
-  importText: { fontSize: 12, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.primary },
+  importText: { fontSize: 12, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.primary },
 
   scroll: { flex: 1 },
   list: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.xs, gap: SPACING.sm },
 
   emptyCard: { alignItems: 'center', gap: 6, paddingVertical: 22 },
-  emptyTitle: { fontSize: 15, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  emptyTitle: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   emptyBody: { fontSize: 12, color: COLORS.textMuted, textAlign: 'center' },
 
   rowCard: { padding: 14, gap: 8, borderRadius: 20 },
   rowTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  rowName: { flex: 1, fontSize: 15, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  rowName: { flex: 1, fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   rowRoll: { fontSize: 11, color: COLORS.textMuted, fontFamily: FONT.regular, marginTop: 1 },
-  balanceBig: { fontSize: 18, fontFamily: FONT.bold, color: COLORS.primaryDeep },
+  balanceBig: { fontSize: 18, fontFamily: FONT.display, fontWeight: '300', color: COLORS.primaryDeep },
   inputRow: { flexDirection: 'row', gap: 10 },
   inputWrap: { flex: 1, gap: 4 },
   inputLabel: { fontSize: 10 },
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
   },
   totalsRow: { flexDirection: 'row', justifyContent: 'space-between' },
   totalsText: { fontSize: 11, color: COLORS.textMuted, fontFamily: FONT.regular },
-  totalsStrong: { fontSize: 11, color: COLORS.text, fontFamily: FONT.medium, fontWeight: '600' },
+  totalsStrong: { fontSize: 11, color: COLORS.text, fontFamily: FONT.regular, fontWeight: '400' },
   saveBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -652,9 +652,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   saveBtnDisabled: { opacity: 0.45 },
-  saveText: { color: COLORS.onPrimary, fontSize: 14, fontFamily: FONT.medium, fontWeight: '600' },
+  saveText: { color: COLORS.onPrimary, fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400' },
   linkRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 4 },
-  linkText: { fontSize: 12, color: COLORS.compliant, fontFamily: FONT.medium, fontWeight: '600' },
+  linkText: { fontSize: 12, color: COLORS.compliant, fontFamily: FONT.regular, fontWeight: '400' },
 
   searchCard: {
     marginHorizontal: SPACING.lg,
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: COLORS.outline,
   },
-  hitName: { fontSize: 13, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  hitName: { fontSize: 13, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   hitSub: { fontSize: 11, color: COLORS.textMuted, fontFamily: FONT.regular, marginTop: 1 },
   hitInput: {
     width: 96,
@@ -691,5 +691,5 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     backgroundColor: COLORS.primary,
   },
-  hitBtnText: { color: COLORS.onPrimary, fontSize: 12, fontFamily: FONT.medium, fontWeight: '600' },
+  hitBtnText: { color: COLORS.onPrimary, fontSize: 12, fontFamily: FONT.regular, fontWeight: '400' },
 });

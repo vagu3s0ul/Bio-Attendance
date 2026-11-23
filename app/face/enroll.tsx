@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -8,10 +8,10 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as DocumentPicker from 'expo-document-picker';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONT, RADIUS, SPACING } from '@/constants/theme';
 import { clearFaceStudent, enrollFaceStudent } from '@/services/api';
@@ -27,6 +27,8 @@ export default function FaceEnrollScreen() {
     name?: string;
     className?: string;
     samples?: string;
+    queue?: string;
+    qi?: string;
   }>();
 
   const roll = String(params.roll || '');
@@ -34,9 +36,51 @@ export default function FaceEnrollScreen() {
   const className = params.className ? String(params.className) : undefined;
   const alreadyEnrolled = Number(params.samples || 0) > 0;
 
+  const queueParam = params.queue ? String(params.queue) : '';
+  const queueIndex = params.qi !== undefined ? Number(params.qi) : -1;
+  let parsedQueue: { roll: string; name: string }[] = [];
+  try {
+    if (queueParam) parsedQueue = JSON.parse(queueParam);
+  } catch {
+    parsedQueue = [];
+  }
+
   const [permission, requestPermission] = useCameraPermissions();
   const camera = useRef<CameraView>(null);
   const [facing, setFacing] = useState<'front' | 'back'>('front');
+  // Camera restart state (fix 4): the native session can die while the app is
+  // backgrounded and CameraView does not heal itself — flipping front/back
+  // only worked because it forced a restart. Bumping camKey remounts the
+  // camera; cameraReady tracks whether it actually came back.
+  const [camKey, setCamKey] = useState(0);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [cameraStalled, setCameraStalled] = useState(false);
+  const cameraReadyRef = useRef(false);
+  const firstFocusRef = useRef(true);
+
+  // Restart the camera every time this screen gains focus. The first focus
+  // is the fresh mount itself, so it is skipped.
+  useFocusEffect(
+    useCallback(() => {
+      if (firstFocusRef.current) {
+        firstFocusRef.current = false;
+        return;
+      }
+      setCamKey((k) => k + 1);
+    }, [])
+  );
+
+  // If the camera has not reported ready within ~3s of a (re)start, offer a
+  // manual restart instead of leaving a black preview.
+  useEffect(() => {
+    cameraReadyRef.current = false;
+    setCameraReady(false);
+    setCameraStalled(false);
+    const t = setTimeout(() => {
+      if (!cameraReadyRef.current) setCameraStalled(true);
+    }, 3000);
+    return () => clearTimeout(t);
+  }, [camKey, facing]);
 
   const [samples, setSamples] = useState<number[][]>([]);
   const [busy, setBusy] = useState(false);
@@ -150,6 +194,24 @@ export default function FaceEnrollScreen() {
         Alert.alert('Could not save', res.message);
         return;
       }
+
+      const nextIndex = queueIndex >= 0 ? queueIndex + 1 : -1;
+      if (nextIndex >= 0 && nextIndex < parsedQueue.length) {
+        const next = parsedQueue[nextIndex];
+        router.replace({
+          pathname: '/face/enroll',
+          params: {
+            roll: next.roll,
+            name: next.name,
+            className: className,
+            samples: '0',
+            queue: queueParam,
+            qi: String(nextIndex),
+          },
+        });
+        return;
+      }
+
       Alert.alert('Face enrolled', `${name} is now enrolled for face attendance.`, [
         { text: 'Done', onPress: () => router.back() },
       ]);
@@ -163,6 +225,39 @@ export default function FaceEnrollScreen() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // Skip this student (absent today) without enrolling — advance the queue
+  // exactly like save() does after a successful enrolment, minus the server
+  // call. Samples are cleared first so the next student starts fresh even
+  // if this screen is not remounted by the navigation.
+  const skip = () => {
+    if (busy || saving) return;
+    if (queueIndex < 0) {
+      router.back();
+      return;
+    }
+    setSamples([]);
+    setStatus('Center the face inside the frame');
+    const nextIndex = queueIndex + 1;
+    if (nextIndex < parsedQueue.length) {
+      const next = parsedQueue[nextIndex];
+      router.replace({
+        pathname: '/face/enroll',
+        params: {
+          roll: next.roll,
+          name: next.name,
+          className: className,
+          samples: '0',
+          queue: queueParam,
+          qi: String(nextIndex),
+        },
+      });
+      return;
+    }
+    Alert.alert('Done', 'No more students to enrol.', [
+      { text: 'Done', onPress: () => router.back() },
+    ]);
   };
 
   const remove = () => {
@@ -227,10 +322,16 @@ export default function FaceEnrollScreen() {
   return (
     <View style={styles.root}>
       <CameraView
+        key={`${facing}-${camKey}`}
         ref={camera}
         style={StyleSheet.absoluteFill}
         facing={facing}
         animateShutter={false}
+        onCameraReady={() => {
+          cameraReadyRef.current = true;
+          setCameraReady(true);
+          setCameraStalled(false);
+        }}
       />
 
       <SafeAreaView style={styles.overlay} edges={['top', 'bottom']}>
@@ -279,6 +380,15 @@ export default function FaceEnrollScreen() {
         </View>
 
         <View style={styles.bottom}>
+          {cameraStalled ? (
+            <Pressable
+              onPress={() => setCamKey((k) => k + 1)}
+              style={({ pressed }) => [styles.restartBtn, pressed && styles.pressed]}
+            >
+              <Ionicons name="refresh-outline" size={16} color="#fff" />
+              <Text style={styles.restartBtnText}>Camera didn&apos;t start — tap to restart</Text>
+            </Pressable>
+          ) : null}
           <View style={styles.dots}>
             {Array.from({ length: TARGET_SAMPLES }).map((_, i) => (
               <View key={i} style={[styles.dot, i < samples.length && styles.dotDone]} />
@@ -337,6 +447,16 @@ export default function FaceEnrollScreen() {
                 : `Save face (${samples.length} sample${samples.length === 1 ? '' : 's'})`}
             </Text>
           </Pressable>
+
+          {queueIndex >= 0 ? (
+            <Pressable
+              onPress={skip}
+              disabled={busy || saving}
+              style={({ pressed }) => [styles.skipBtn, pressed && styles.pressed]}
+            >
+              <Text style={styles.skipBtnText}>Skip — absent today</Text>
+            </Pressable>
+          ) : null}
         </View>
       </SafeAreaView>
     </View>
@@ -426,6 +546,20 @@ const styles = StyleSheet.create({
   },
   primaryBtnDisabled: { backgroundColor: 'rgba(45,108,223,0.45)' },
   primaryBtnText: { color: COLORS.onPrimary, fontSize: 14, fontFamily: FONT.medium, fontWeight: '600' },
+  restartBtn: {
+    alignSelf: 'stretch',
+    height: 44,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.55)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  restartBtnText: { color: '#fff', fontSize: 13, fontFamily: FONT.medium },
+  skipBtn: { height: 40, alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch' },
+  skipBtnText: { color: 'rgba(255,255,255,0.75)', fontSize: 13.5, fontFamily: FONT.medium },
   ghostBtn: { height: 44, alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch' },
   ghostBtnText: { color: COLORS.textMuted, fontSize: 14, fontFamily: FONT.medium },
   webPickBtn: {

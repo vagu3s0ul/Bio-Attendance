@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { COLORS, FONT, RADIUS, SPACING } from '@/constants/theme';
 import { IconTile, ListRow, Panel, Pill, QuickTile, SectionHeader, StatTile, type Tone } from '@/components/UI';
@@ -212,6 +212,17 @@ export default function AdminHome({
           </View>
         ))}
       </View>
+
+      {/* Broadcast notification */}
+      <Panel style={styles.activity}>
+        <ListRow
+          icon="megaphone-outline"
+          tone="rose"
+          title="Send App Notification"
+          sub="Broadcast a custom message to all signed-in apps"
+          onPress={() => router.push({ pathname: '/web/[page]', params: { page: 'notifications' } })}
+        />
+      </Panel>
 
       {/* Live class status */}
       <SectionHeader

@@ -102,7 +102,7 @@ export function buildParentMessage(opts: {
 }): string {
   const items = joinFailedItems(opts.failedItems);
   return (
-    `Dear parent, your ward ${opts.studentName} (Roll ${opts.roll}, Class ${opts.className}) ` +
+    `ٱلسَّلَامُ عَلَيْكُمْ Dear parent, your ward ${opts.studentName} (Roll ${opts.roll}, Class ${opts.className}) ` +
     `was found without ${items} today (${opts.date}). Kindly ensure this is corrected. — ` +
     `${opts.schoolName || SCHOOL_NAME}`
   );
@@ -116,7 +116,7 @@ export function buildAbsentMessage(opts: {
   schoolName?: string;
 }): string {
   return (
-    `Dear parent, your ward ${opts.studentName} (Roll ${opts.roll}, Class ${opts.className}) ` +
+    `ٱلسَّلَامُ عَلَيْكُمْ Dear parent, your ward ${opts.studentName} (Roll ${opts.roll}, Class ${opts.className}) ` +
     `was absent today (${opts.date}). Please contact the school regarding their absence. — ` +
     `${opts.schoolName || SCHOOL_NAME}`
   );

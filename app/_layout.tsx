@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -13,8 +13,13 @@ import {
 import { SessionProvider, useSession } from '@/store/session';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import AppBottomNav from '@/components/AppBottomNav';
+import AnimatedSplash from '@/components/AnimatedSplash';
 import { COLORS, FONT } from '@/constants/theme';
 import { listenForReminderTaps } from '@/services/reminders';
+import { AppState } from 'react-native';
+import { pollNotifications, requestNotificationPermission } from '@/services/notifications';
+import { fetchUpdateInfo, installedInfo, isUpdateAvailable } from '@/services/updates';
+import { Alert } from 'react-native';
 
 function RootNavigator() {
   const [fontsLoaded, fontError] = useFonts({
@@ -24,9 +29,55 @@ function RootNavigator() {
     Inter_700Bold,
   });
   const { ready } = useSession();
+  const [splashDone, setSplashDone] = useState(false);
 
   // A tapped defaulter reminder opens the pre-filled WhatsApp chat.
   useEffect(() => listenForReminderTaps().remove, []);
+
+  // Poll the school site for push notifications (no FCM/Play Store needed).
+  useEffect(() => {
+    let active = true;
+    let timer: ReturnType<typeof setInterval> | null = null;
+    (async () => {
+      await requestNotificationPermission();
+      await pollNotifications();
+      timer = setInterval(() => {
+        if (active) void pollNotifications();
+      }, 30000);
+    })();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && active) void pollNotifications();
+    });
+    return () => {
+      active = false;
+      if (timer) clearInterval(timer);
+      sub.remove();
+    };
+  }, []);
+
+  // Silent update check on startup (sideloaded builds only).
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const info = await fetchUpdateInfo();
+        if (!active || !info) return;
+        const installed = installedInfo();
+        if (isUpdateAvailable(info, installed)) {
+          Alert.alert(
+            'Update available',
+            `${info.version} is available (you have ${installed.version}). Open Profile → App updates to install.`,
+            [{ text: 'OK' }]
+          );
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if ((fontsLoaded || fontError) && ready) {
@@ -61,34 +112,19 @@ function RootNavigator() {
             <Stack.Screen
               name="fees/index"
               options={{
-                headerShown: true,
-                headerStyle: { backgroundColor: COLORS.surface },
-                headerTintColor: COLORS.primary,
-                headerTitle: 'Fee dues',
-                headerTitleStyle: { fontFamily: FONT.medium, fontWeight: '600' },
-                headerShadowVisible: true,
+                headerShown: false, // screen renders its own design-system app bar
               }}
             />
             <Stack.Screen
               name="notify"
               options={{
-                headerShown: true,
-                headerStyle: { backgroundColor: COLORS.surface },
-                headerTintColor: COLORS.primary,
-                headerTitle: 'Notify Parents',
-                headerTitleStyle: { fontFamily: FONT.medium, fontWeight: '600' },
-                headerShadowVisible: true,
+                headerShown: false, // screen renders its own design-time header bar
               }}
             />
             <Stack.Screen
               name="notices/index"
               options={{
-                headerShown: true,
-                headerStyle: { backgroundColor: COLORS.surface },
-                headerTintColor: COLORS.primary,
-                headerTitle: 'Notices',
-                headerTitleStyle: { fontFamily: FONT.medium, fontWeight: '600' },
-                headerShadowVisible: true,
+                headerShown: false, // screen renders its own design-system app bar
               }}
             />
             <Stack.Screen
@@ -105,6 +141,7 @@ function RootNavigator() {
         </View>
         <AppBottomNav />
       </View>
+      {!splashDone && <AnimatedSplash onFinish={() => setSplashDone(true)} />}
     </ErrorBoundary>
   );
 }

@@ -8,12 +8,13 @@ import {
   Vibration,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONT, RADIUS, SPACING } from '@/constants/theme';
-import { FaceRoster, fetchFaceRoster, saveFaceAttendance } from '@/services/api';
+import { FaceRoster, fetchFaceRoster, fetchProfile, saveFaceAttendance } from '@/services/api';
+import { canMarkAttendance } from '@/services/location';
 import {
   discardCapture,
   embeddingFromPhoto,
@@ -40,6 +41,8 @@ export default function FaceScanScreen() {
   const [lastMatch, setLastMatch] = useState<{ name: string; score: number } | null>(null);
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [deadline, setDeadline] = useState<string>('');
+  const [guard, setGuard] = useState<{ ok: boolean; reason?: string } | null>(null);
 
   // Refs keep the scan loop from closing over stale state.
   const presentRef = useRef<Set<string>>(new Set());
@@ -144,20 +147,36 @@ export default function FaceScanScreen() {
                   setStatus('Face not recognised — move closer');
                 }
               } else if (!presentRef.current.has(match.roll)) {
-                presentRef.current.add(match.roll);
-                matchedNowRef.current.add(match.roll);
-                setPresent(Array.from(presentRef.current));
-                setLastMatch({ name: match.name, score: match.score });
-                setStatus(`${match.name} verified present`);
-                Vibration.vibrate(70);
-                // Popup verification: pause scanning until the teacher confirms,
-                // then continue to the next student.
+                // Real confirmation: nothing is marked until the teacher says
+                // yes. The match is only added to the present set on
+                // "Yes, correct" — "No" resumes scanning with nothing saved.
                 pendingConfirmRef.current = true;
                 setBusy(false);
+                Vibration.vibrate(70);
                 Alert.alert(
-                  'Verified',
-                  `${match.name} was recognised and marked present.\n\nTake the next student?`,
-                  [{ text: 'Continue', onPress: () => { pendingConfirmRef.current = false; } }]
+                  `Is this ${match.name}?`,
+                  `Roll #${match.roll} · Class ${roster.class}\nMatch score ${match.score.toFixed(2)}`,
+                  [
+                    {
+                      text: 'No — wrong student',
+                      style: 'cancel',
+                      onPress: () => {
+                        pendingConfirmRef.current = false;
+                        setStatus(`Not ${match.name} — try again`);
+                      },
+                    },
+                    {
+                      text: 'Yes, correct',
+                      onPress: () => {
+                        presentRef.current.add(match.roll);
+                        matchedNowRef.current.add(match.roll);
+                        setPresent(Array.from(presentRef.current));
+                        setLastMatch({ name: match.name, score: match.score });
+                        setStatus(`${match.name} verified present`);
+                        pendingConfirmRef.current = false;
+                      },
+                    },
+                  ]
                 );
               } else {
                 setStatus(`${match.name} already present`);
@@ -184,8 +203,28 @@ export default function FaceScanScreen() {
     };
   }, [cameraReady, engineReady, roster]);
 
+  useEffect(() => {
+    fetchProfile().then((p) => setDeadline(p.deadline || '')).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const g = await canMarkAttendance(deadline);
+      if (alive) setGuard(g);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [deadline]);
+
   const save = async (markAbsent: boolean) => {
     if (!roster || saving) return;
+    const guard = await canMarkAttendance(deadline);
+    if (!guard.ok) {
+      Alert.alert('Cannot mark attendance', guard.reason || 'Attendance is not allowed right now.');
+      return;
+    }
     setSaving(true);
     try {
       const res = await saveFaceAttendance(
@@ -282,6 +321,7 @@ export default function FaceScanScreen() {
     );
   }
 
+  const blocked = !!guard && !guard.ok;
   const total = roster?.total ?? 0;
   const presentCount = present.length;
   const progress = total > 0 ? presentCount / total : 0;
@@ -337,7 +377,7 @@ export default function FaceScanScreen() {
           <View style={styles.statusPill}>
             {busy ? <ActivityIndicator size="small" color="#fff" /> : null}
             <Text style={styles.statusText} numberOfLines={2}>
-              {engineError ? engineError : status}
+              {engineError ? engineError : blocked && guard?.reason ? guard.reason : status}
             </Text>
           </View>
         </View>
@@ -373,11 +413,11 @@ export default function FaceScanScreen() {
 
           <Pressable
             onPress={finish}
-            disabled={saving}
+            disabled={saving || blocked}
             style={({ pressed }) => [
               styles.primaryBtn,
-              saving && styles.primaryBtnBusy,
-              pressed && styles.pressed,
+              (saving || blocked) && styles.primaryBtnBusy,
+              pressed && !blocked && styles.pressed,
             ]}
           >
             <Text style={styles.primaryBtnText}>

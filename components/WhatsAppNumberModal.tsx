@@ -17,7 +17,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, FONT, LABEL_CAPS, RADIUS, SPACING } from '@/constants/theme';
 import { getWhatsappNumber, isValidNumber, normalizeNumber, setWhatsappNumber } from '@/services/whatsapp';
 

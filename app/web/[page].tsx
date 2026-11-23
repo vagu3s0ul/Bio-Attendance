@@ -6,7 +6,7 @@ import { pageTitle, pageUri } from '@/services/api';
 import { useSession } from '@/store/session';
 
 /** Admin-only PHP pages (teachers get bounced to their dashboard). */
-const ADMIN_ONLY = new Set(['audit', 'manage']);
+const ADMIN_ONLY = new Set(['audit', 'manage', 'notifications']);
 
 export default function WebPage() {
   const { page } = useLocalSearchParams<{ page: string }>();

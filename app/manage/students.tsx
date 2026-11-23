@@ -12,15 +12,17 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import AdminOnly from '@/components/AdminOnly';
 import Screen from '@/components/Screen';
 import AppBar from '@/components/AppBar';
 import Card from '@/components/Card';
+import ClassPicker from '@/components/ClassPicker';
 import { COLORS, FONT, LABEL_CAPS, RADIUS, SPACING } from '@/constants/theme';
 import {
   addStudent,
+  bulkDeleteStudents,
   deleteStudent,
   editStudent,
   fetchManagePage,
@@ -33,11 +35,13 @@ type StudentForm = { id?: number; className: string; rollno: string; name: strin
 function StudentModal({
   visible,
   initial,
+  classes,
   onClose,
   onSaved,
 }: {
   visible: boolean;
   initial: StudentForm | null;
+  classes: string[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -109,15 +113,7 @@ function StudentModal({
           <Text style={styles.modalTitle}>{initial?.id ? 'Edit Student' : 'Add New Student'}</Text>
           <View style={styles.field}>
             <Text style={[styles.fieldLabel, LABEL_CAPS]}>Class</Text>
-            <TextInput
-              style={styles.input}
-              value={className}
-              onChangeText={setClassName}
-              placeholder="e.g. 6A"
-              placeholderTextColor={COLORS.textFaint}
-              autoCapitalize="characters"
-              autoCorrect={false}
-            />
+            <ClassPicker value={className} onChange={setClassName} classes={classes} />
           </View>
           <View style={styles.field}>
             <Text style={[styles.fieldLabel, LABEL_CAPS]}>Roll No</Text>
@@ -172,6 +168,121 @@ function StudentModal({
   );
 }
 
+function BulkDeleteModal({
+  visible,
+  classes,
+  onClose,
+  onDeleted,
+}: {
+  visible: boolean;
+  classes: string[];
+  onClose: () => void;
+  onDeleted: (message: string) => void;
+}) {
+  const [selected, setSelected] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (visible) {
+      setSelected([]);
+      setErr(null);
+      setBusy(false);
+    }
+  }, [visible]);
+
+  const toggle = (c: string) =>
+    setSelected((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
+
+  const allSelected = classes.length > 0 && selected.length === classes.length;
+
+  const remove = async () => {
+    if (selected.length === 0) {
+      setErr('Select at least one class to delete.');
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    try {
+      const res = await bulkDeleteStudents({ classes: selected });
+      if (res.ok) {
+        onClose();
+        onDeleted(res.message);
+      } else {
+        setErr(res.message);
+      }
+    } catch (e: any) {
+      setErr(e?.message || 'Could not delete the students.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalCard}>
+          <Text style={styles.modalTitle}>Bulk Delete Students</Text>
+          <Text style={styles.bulkSub}>
+            Pick the classes to clear. Their students are deactivated and disappear from entry, reports and the
+            face roster. This cannot be undone.
+          </Text>
+
+          <Pressable style={styles.bulkAll} onPress={() => setSelected(allSelected ? [] : [...classes])}>
+            <View style={[styles.bulkCheck, allSelected && styles.bulkCheckOn]}>
+              {allSelected ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
+            </View>
+            <Text style={styles.bulkAllText}>All classes ({classes.length})</Text>
+          </Pressable>
+
+          <ScrollView style={styles.bulkList} contentContainerStyle={styles.bulkListContent}>
+            {classes.length === 0 ? (
+              <Text style={styles.empty}>No classes found.</Text>
+            ) : (
+              classes.map((c) => {
+                const on = selected.includes(c);
+                return (
+                  <Pressable key={c} style={styles.bulkRow} onPress={() => toggle(c)}>
+                    <View style={[styles.bulkCheck, on && styles.bulkCheckOn]}>
+                      {on ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
+                    </View>
+                    <Text style={styles.bulkRowText}>Class {c}</Text>
+                  </Pressable>
+                );
+              })
+            )}
+          </ScrollView>
+
+          {err ? <Text style={styles.err}>{err}</Text> : null}
+          <View style={styles.modalActions}>
+            <Pressable style={styles.cancelBtn} onPress={onClose}>
+              <Text style={styles.cancelText}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.saveBtn,
+                styles.dangerBtn,
+                pressed && styles.pressed,
+                (busy || selected.length === 0) && styles.busy,
+              ]}
+              onPress={remove}
+              disabled={busy || selected.length === 0}
+            >
+              {busy ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.saveText}>
+                  Delete{selected.length ? ` ${selected.length} class${selected.length === 1 ? '' : 'es'}` : ''}
+                </Text>
+              )}
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function ManageStudents() {
   const router = useRouter();
   const [data, setData] = useState<ManagePage | null>(null);
@@ -181,6 +292,7 @@ export default function ManageStudents() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<{ open: boolean; initial: StudentForm | null }>({ open: false, initial: null });
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const load = useCallback(
     async (p: number, s: string, f: string) => {
@@ -281,7 +393,7 @@ export default function ManageStudents() {
         </ScrollView>
       </View>
 
-      {/* Add button */}
+      {/* Add / bulk delete */}
       <View style={styles.addWrap}>
         <Pressable
           style={({ pressed }) => [styles.addBtn, pressed && styles.pressed]}
@@ -289,6 +401,12 @@ export default function ManageStudents() {
         >
           <Ionicons name="add" size={20} color="#fff" />
           <Text style={styles.addText}>ADD NEW STUDENT</Text>
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [styles.bulkDeleteBtn, pressed && styles.pressed]}
+          onPress={() => setBulkOpen(true)}
+        >
+          <Ionicons name="trash-outline" size={18} color={COLORS.danger} />
         </Pressable>
       </View>
 
@@ -353,9 +471,22 @@ export default function ManageStudents() {
         </ScrollView>
       )}
 
+      <BulkDeleteModal
+        visible={bulkOpen}
+        classes={classes}
+        onClose={() => setBulkOpen(false)}
+        onDeleted={(message) => {
+          setBulkOpen(false);
+          Alert.alert('Students deleted', message);
+          setPage(1);
+          load(1, search, filterClass);
+        }}
+      />
+
       <StudentModal
         visible={modal.open}
         initial={modal.initial}
+        classes={classes}
         onClose={() => setModal({ open: false, initial: null })}
         onSaved={() => {
           setModal({ open: false, initial: null });
@@ -396,8 +527,9 @@ const styles = StyleSheet.create({
   chipOn: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   chipText: { fontSize: 12.5, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.textMuted },
   chipTextOn: { color: '#fff' },
-  addWrap: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md },
+  addWrap: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md, flexDirection: 'row', gap: 10 },
   addBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -406,7 +538,35 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     backgroundColor: COLORS.primary,
   },
-  addText: { color: '#fff', fontSize: 13, fontFamily: FONT.medium, fontWeight: '600', letterSpacing: 0.4 },
+  bulkDeleteBtn: {
+    width: 48,
+    height: 44,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bulkSub: { fontSize: 12.5, color: COLORS.textMuted, fontFamily: FONT.regular, lineHeight: 18 },
+  bulkAll: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
+  bulkAllText: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
+  bulkList: { maxHeight: 240 },
+  bulkListContent: { gap: 2, paddingVertical: 2 },
+  bulkRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
+  bulkRowText: { fontSize: 14, color: COLORS.text, fontFamily: FONT.regular },
+  bulkCheck: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: COLORS.outline,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.background,
+  },
+  bulkCheckOn: { backgroundColor: COLORS.danger, borderColor: COLORS.danger },
+  dangerBtn: { backgroundColor: COLORS.danger },
+  addText: { color: '#fff', fontSize: 13, fontFamily: FONT.regular, fontWeight: '400', letterSpacing: 0.4 },
   scroll: { flex: 1 },
   list: { paddingHorizontal: SPACING.lg, gap: SPACING.md, paddingBottom: 32 },
   count: { color: COLORS.textMuted, marginTop: 2 },
@@ -414,8 +574,8 @@ const styles = StyleSheet.create({
   studentInfo: { flex: 1 },
   studentMeta: {
     fontSize: 11.5,
-    fontFamily: FONT.medium,
-    fontWeight: '600',
+    fontFamily: FONT.regular,
+    fontWeight: '400',
     letterSpacing: 0.4,
     color: COLORS.textMuted,
   },
@@ -424,7 +584,7 @@ const styles = StyleSheet.create({
   pager: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, paddingVertical: 8 },
   pageBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   pageBtnDisabled: { opacity: 0.4 },
-  pageText: { fontSize: 13, color: COLORS.textMuted, fontFamily: FONT.medium, fontWeight: '600' },
+  pageText: { fontSize: 13, color: COLORS.textMuted, fontFamily: FONT.regular, fontWeight: '400' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, padding: 32 },
   empty: { fontSize: 13, color: COLORS.textMuted, fontFamily: FONT.regular },
   // Modal
@@ -442,7 +602,7 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 12,
   },
-  modalTitle: { fontSize: 18, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  modalTitle: { fontSize: 18, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
   field: { gap: 6 },
   fieldLabel: { color: COLORS.textMuted },
   input: {
@@ -468,7 +628,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cancelText: { color: COLORS.text, fontSize: 14, fontFamily: FONT.medium, fontWeight: '600' },
+  cancelText: { color: COLORS.text, fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400' },
   saveBtn: {
     flex: 1,
     height: 44,
@@ -477,7 +637,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  saveText: { color: '#fff', fontSize: 14, fontFamily: FONT.medium, fontWeight: '600' },
+  saveText: { color: '#fff', fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400' },
   pressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
   busy: { opacity: 0.7 },
 });

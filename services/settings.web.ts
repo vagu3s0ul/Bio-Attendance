@@ -10,16 +10,28 @@ const USER_KEY = 'sps_user';
 const USERNAME_KEY = 'sps_saved_username';
 
 export const DEFAULT_BASE_URL =
-  process.env.EXPO_PUBLIC_BASE_URL || 'http://attendance.spscsialkot.com';
+  process.env.EXPO_PUBLIC_BASE_URL || 'http://140.245.1.42';
 
 export const MOBILE_UA =
   'Mozilla/5.0 (Linux; Android 12; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';
 
 let cachedBaseUrl: string | null = null;
 
+const SENSITIVE_KEYS = new Set([TOKEN_KEY, COOKIE_KEY]);
+
+function storageFor(key: string): Storage | null {
+  try {
+    return SENSITIVE_KEYS.has(key)
+      ? (globalThis.sessionStorage ?? null)
+      : (globalThis.localStorage ?? null);
+  } catch {
+    return null;
+  }
+}
+
 function read(key: string): string | null {
   try {
-    return globalThis.localStorage?.getItem(key) ?? null;
+    return storageFor(key)?.getItem(key) ?? null;
   } catch {
     return null;
   }
@@ -27,8 +39,10 @@ function read(key: string): string | null {
 
 function write(key: string, value: string | null): void {
   try {
-    if (value === null) globalThis.localStorage?.removeItem(key);
-    else globalThis.localStorage?.setItem(key, value);
+    const storage = storageFor(key);
+    if (!storage) return;
+    if (value === null) storage.removeItem(key);
+    else storage.setItem(key, value);
   } catch {
     // non-fatal
   }

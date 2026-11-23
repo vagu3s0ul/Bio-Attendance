@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { COLORS, FONT, SPACING } from '@/constants/theme';
 import { useSession } from '@/store/session';
@@ -12,9 +12,11 @@ import { useSession } from '@/store/session';
 export default function AppBar({
   showBell = true,
   onBell,
+  light = false,
 }: {
   showBell?: boolean;
   onBell?: () => void;
+  light?: boolean; // white text/icons for dark or gradient backgrounds
 }) {
   const router = useRouter();
   const { user } = useSession();
@@ -22,14 +24,14 @@ export default function AppBar({
 
   return (
     <View style={styles.bar}>
-      <View style={styles.emblem}>
-        <Ionicons name="school" size={16} color={COLORS.primary} />
+      <View style={[styles.emblem, light && styles.emblemLight]}>
+        <Ionicons name="school" size={16} color={light ? '#fff' : COLORS.primary} />
       </View>
       <View style={styles.titles}>
-        <Text style={styles.title} numberOfLines={1}>
+        <Text style={[styles.title, light && styles.titleLight]} numberOfLines={1}>
           Bio Attendance
         </Text>
-        <Text style={styles.sub} numberOfLines={1}>
+        <Text style={[styles.sub, light && styles.subLight]} numberOfLines={1}>
           Sialkot Campus
         </Text>
       </View>
@@ -37,16 +39,16 @@ export default function AppBar({
         <Pressable
           onPress={onBell ?? (() => router.push('/notices'))}
           hitSlop={10}
-          style={({ pressed }) => [styles.bell, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.bell, light && styles.bellLight, pressed && styles.pressed]}
           accessibilityRole="button"
           accessibilityLabel="Notifications"
         >
-          <Ionicons name="notifications-outline" size={20} color={COLORS.text} />
+          <Ionicons name="notifications-outline" size={20} color={light ? '#fff' : COLORS.text} />
         </Pressable>
       ) : null}
       <Pressable
         onPress={() => router.push('/settings' as any)}
-        style={({ pressed }) => [styles.avatar, pressed && styles.pressed]}
+        style={({ pressed }) => [styles.avatar, light && styles.avatarLight, pressed && styles.pressed]}
         accessibilityRole="button"
         accessibilityLabel="Profile"
       >
@@ -94,4 +96,9 @@ const styles = StyleSheet.create({
   },
   avatarText: { fontSize: 14, fontFamily: FONT.medium, fontWeight: '600', color: '#fff' },
   pressed: { opacity: 0.85 },
+  emblemLight: { backgroundColor: 'rgba(255,255,255,0.16)' },
+  titleLight: { color: '#fff' },
+  subLight: { color: 'rgba(255,255,255,0.75)' },
+  bellLight: { backgroundColor: 'rgba(255,255,255,0.16)' },
+  avatarLight: { backgroundColor: 'rgba(255,255,255,0.18)' },
 });

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Notifications from 'expo-notifications';
 import {
   Inter_300Light,
   Inter_400Regular,
@@ -17,7 +18,12 @@ import AnimatedSplash from '@/components/AnimatedSplash';
 import { COLORS, FONT } from '@/constants/theme';
 import { listenForReminderTaps } from '@/services/reminders';
 import { AppState } from 'react-native';
-import { pollNotifications, requestNotificationPermission } from '@/services/notifications';
+import {
+  pollNotifications,
+  registerPushToken,
+  requestNotificationPermission,
+  setLastSeenId,
+} from '@/services/notifications';
 import { fetchUpdateInfo, installedInfo, isUpdateAvailable } from '@/services/updates';
 import { Alert } from 'react-native';
 
@@ -28,7 +34,8 @@ function RootNavigator() {
     Inter_600SemiBold,
     Inter_700Bold,
   });
-  const { ready } = useSession();
+  const { ready, user } = useSession();
+  const router = useRouter();
   const [splashDone, setSplashDone] = useState(false);
 
   // A tapped defaulter reminder opens the pre-filled WhatsApp chat.
@@ -54,6 +61,34 @@ function RootNavigator() {
       sub.remove();
     };
   }, []);
+
+  // Real push: register this phone's Expo push token once signed in, so
+  // notifications pop up even with the app closed. Quiet no-op when push
+  // is not configured (no EAS project id) — polling above keeps working.
+  useEffect(() => {
+    if (!ready || !user) return;
+    void registerPushToken();
+  }, [ready, user]);
+
+  // Push / notification taps: only app notifications (data.notificationId)
+  // open the inbox. Other local notifications (e.g. defaulter reminders)
+  // are left to their own listeners — this must not hijack them.
+  useEffect(() => {
+    const receivedSub = Notifications.addNotificationReceivedListener((response) => {
+      const id = (response?.request?.content?.data as any)?.notificationId;
+      if (id) void setLastSeenId(String(id));
+    });
+    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = (response?.notification?.request?.content?.data as any) || {};
+      if (!data.notificationId) return;
+      void setLastSeenId(String(data.notificationId));
+      router.replace('/notifications');
+    });
+    return () => {
+      receivedSub.remove();
+      responseSub.remove();
+    };
+  }, [router]);
 
   // Silent update check on startup (sideloaded builds only).
   useEffect(() => {
@@ -112,7 +147,7 @@ function RootNavigator() {
             <Stack.Screen
               name="fees/index"
               options={{
-                headerShown: false, // screen renders its own design-system app bar
+                headerShown: false, // screen renders its own design-time header bar
               }}
             />
             <Stack.Screen

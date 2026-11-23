@@ -56,10 +56,10 @@ export interface InstalledInfo {
 
 /** Read the version of the currently installed build. */
 export function installedInfo(): InstalledInfo {
-  const version = Application.nativeApplicationVersion || Constants.expoConfig?.version || '1.4.17';
+  const version = Application.nativeApplicationVersion || Constants.expoConfig?.version || '1.4.18';
   const codeRaw = Application.nativeBuildVersion;
-  const versionCode = codeRaw ? Number(codeRaw) : (Constants.expoConfig?.android?.versionCode ?? 23);
-  return { version, versionCode: Number.isFinite(versionCode) ? versionCode : 23 };
+  const versionCode = codeRaw ? Number(codeRaw) : (Constants.expoConfig?.android?.versionCode ?? 24);
+  return { version, versionCode: Number.isFinite(versionCode) ? versionCode : 24 };
 }
 
 /** Fetch the latest update manifest from the site. Returns null on failure. */

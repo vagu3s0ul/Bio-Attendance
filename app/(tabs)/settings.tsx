@@ -423,7 +423,7 @@ export default function ProfileScreen() {
             JSON API.
           </Text>
           <Text style={styles.version}>
-            Version {Application.nativeApplicationVersion || Constants.expoConfig?.version || '1.4.17'}
+            Version {Application.nativeApplicationVersion || Constants.expoConfig?.version || '1.4.18'}
           </Text>
           <Text style={styles.aboutText}>
             Developed by SPCS IT Department (Ahmed Faran).

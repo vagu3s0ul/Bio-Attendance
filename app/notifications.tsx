@@ -17,6 +17,7 @@ import Card from '@/components/Card';
 import { COLORS, FONT, RADIUS, SPACING } from '@/constants/theme';
 import {
   AppNotification,
+  downloadAttachment,
   fetchNotifications,
   openNotificationTarget,
 } from '@/services/notifications';
@@ -25,6 +26,7 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const [items, setItems] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -41,6 +43,16 @@ export default function NotificationsScreen() {
     load();
   }, [load]);
 
+  const onDownload = useCallback(async (n: AppNotification) => {
+    if (downloadingId) return;
+    setDownloadingId(String(n.id));
+    try {
+      await downloadAttachment(n);
+    } finally {
+      setDownloadingId(null);
+    }
+  }, [downloadingId]);
+
   return (
     <Screen>
       <AppBar showBell={false} />
@@ -55,38 +67,46 @@ export default function NotificationsScreen() {
             <Text style={styles.emptyText}>No notifications yet.</Text>
           </Card>
         ) : (
-          items.map((n) => (
-            <Card key={String(n.id)} style={styles.card}>
-              {n.image ? (
-                <Image source={{ uri: n.image }} style={styles.image} resizeMode="cover" />
-              ) : null}
-              <Text style={styles.itemTitle}>{n.title}</Text>
-              <Text style={styles.itemBody}>{n.body}</Text>
-              {n.created_at ? (
-                <Text style={styles.itemMeta}>{n.created_at}</Text>
-              ) : null}
-              <View style={styles.actions}>
-                {n.link ? (
-                  <Pressable
-                    style={({ pressed }) => [styles.actionBtn, pressed && styles.pressed]}
-                    onPress={() => openNotificationTarget(n.link)}
-                  >
-                    <Ionicons name="link-outline" size={16} color={COLORS.primary} />
-                    <Text style={styles.actionText}>Open link</Text>
-                  </Pressable>
+          items.map((n) => {
+            const isDownloading = downloadingId === String(n.id);
+            return (
+              <Card key={String(n.id)} style={styles.card}>
+                {n.image ? (
+                  <Image source={{ uri: n.image }} style={styles.image} resizeMode="cover" />
                 ) : null}
-                {n.attachment ? (
-                  <Pressable
-                    style={({ pressed }) => [styles.actionBtn, pressed && styles.pressed]}
-                    onPress={() => openNotificationTarget(n.attachment)}
-                  >
-                    <Ionicons name="document-attach-outline" size={16} color={COLORS.primary} />
-                    <Text style={styles.actionText}>Open file</Text>
-                  </Pressable>
+                <Text style={styles.itemTitle}>{n.title}</Text>
+                <Text style={styles.itemBody}>{n.body}</Text>
+                {n.created_at ? (
+                  <Text style={styles.itemMeta}>{n.created_at}</Text>
                 ) : null}
-              </View>
-            </Card>
-          ))
+                <View style={styles.actions}>
+                  {n.link ? (
+                    <Pressable
+                      style={({ pressed }) => [styles.actionBtn, pressed && styles.pressed]}
+                      onPress={() => openNotificationTarget(n.link)}
+                    >
+                      <Ionicons name="link-outline" size={16} color={COLORS.primary} />
+                      <Text style={styles.actionText}>Open link</Text>
+                    </Pressable>
+                  ) : null}
+                  {n.attachment ? (
+                    <Pressable
+                      style={({ pressed }) => [styles.actionBtn, pressed && styles.pressed]}
+                      onPress={() => onDownload(n)}
+                      disabled={isDownloading}
+                    >
+                      {isDownloading ? (
+                        <ActivityIndicator size="small" color={COLORS.primary} />
+                      ) : (
+                        <Ionicons name="download-outline" size={16} color={COLORS.primary} />
+                      )}
+                      <Text style={styles.actionText}>{isDownloading ? 'Downloading…' : 'Download'}</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              </Card>
+            );
+          })
         )}
       </ScrollView>
     </Screen>

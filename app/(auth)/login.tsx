@@ -110,7 +110,7 @@ export default function LoginScreen() {
     );
   };
 
-  const version = Constants.expoConfig?.version ?? '1.4.16';
+  const version = Constants.expoConfig?.version ?? '1.4.18';
 
   return (
     <ImageBackground

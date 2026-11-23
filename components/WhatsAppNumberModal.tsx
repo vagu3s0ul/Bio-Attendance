@@ -2,8 +2,10 @@
  * Shared "WhatsApp number" editor used wherever a student's number can be
  * added/edited: the admin Manage Students form, the teacher's Daily Entry
  * student cards, and the Notify Parents "no number on file" shortcut.
- * Numbers are normalized to E.164-ish form and stored on-device (see
- * services/whatsapp.ts — the PHP site has no column for it yet).
+ * Numbers are normalized to E.164-ish form and saved to the school server
+ * (students.whatsapp — see services/whatsapp.ts), so every teacher and the
+ * office see the same number. When the server can't be reached the number is
+ * kept on this device only and synced automatically later.
  */
 import React, { useEffect, useState } from 'react';
 import {
@@ -40,10 +42,14 @@ export default function WhatsAppNumberModal({
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [savedLocalOnly, setSavedLocalOnly] = useState(false);
 
   useEffect(() => {
     if (!visible) return;
     setErr(null);
+    setNotice(null);
+    setSavedLocalOnly(false);
     setLoading(true);
     getWhatsappNumber(className, roll)
       .then((n) => setNumber(n))
@@ -51,6 +57,10 @@ export default function WhatsAppNumberModal({
   }, [visible, className, roll]);
 
   const save = async () => {
+    if (savedLocalOnly) {
+      onClose();
+      return;
+    }
     const normalized = normalizeNumber(number);
     if (!isValidNumber(number)) {
       setErr('Enter a valid phone number, e.g. 0300 1234567 or +923001234567.');
@@ -58,9 +68,16 @@ export default function WhatsAppNumberModal({
     }
     setBusy(true);
     try {
-      await setWhatsappNumber(className, roll, normalized);
-      onClose();
-      onSaved?.(normalized);
+      const res = await setWhatsappNumber(className, roll, normalized);
+      if (res.savedToServer) {
+        onClose();
+        onSaved?.(normalized);
+      } else {
+        setNotice(
+          'Saved on this device only — the server could not be reached. It will sync automatically when you are back online.'
+        );
+        setSavedLocalOnly(true);
+      }
     } catch (e: any) {
       setErr(e?.message || 'Could not save the number.');
     } finally {
@@ -102,8 +119,9 @@ export default function WhatsAppNumberModal({
                 autoCorrect={false}
               />
               <Text style={styles.hint}>
-                Saved on this device only — the school site doesn't store WhatsApp numbers yet.
+                Saved to the school server — every teacher and the office will see the new number.
               </Text>
+              {notice ? <Text style={styles.notice}>{notice}</Text> : null}
               {err ? <Text style={styles.err}>{err}</Text> : null}
             </>
           )}
@@ -116,7 +134,7 @@ export default function WhatsAppNumberModal({
               onPress={save}
               disabled={busy || loading}
             >
-              {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.saveText}>Save Number</Text>}
+              {busy ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.saveText}>{savedLocalOnly ? 'Done' : 'Save Number'}</Text>}
             </Pressable>
           </View>
         </View>
@@ -165,6 +183,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT.regular,
   },
   hint: { fontSize: 11.5, color: COLORS.textFaint, fontFamily: FONT.regular, lineHeight: 16 },
+  notice: { fontSize: 12, color: COLORS.warningText, fontFamily: FONT.regular, lineHeight: 17 },
   err: { fontSize: 12, color: COLORS.danger, fontFamily: FONT.regular },
   actions: { flexDirection: 'row', gap: 10, marginTop: 8 },
   cancel: {

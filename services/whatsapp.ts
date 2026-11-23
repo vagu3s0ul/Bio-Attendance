@@ -1,15 +1,16 @@
 /**
  * WhatsApp helpers for the "Notify parents" flow.
  *
- * The school's PHP site has no `whatsapp_number` column or form field today,
- * so numbers are stored ON-DEVICE (SecureStore), keyed by the stable
- * `class:roll` identity that both entry.php and manage.php agree on. Making
- * this server-side requires the SQL/PHP change noted in the README; the app
- * keeps working locally until then.
+ * Numbers live on the SCHOOL SERVER (students.whatsapp) and are read back
+ * through `reports/students`. The on-device map (SecureStore) is only a
+ * cache + offline fallback: a number saved while the server can't be reached
+ * is kept on-device, marked pending, and uploaded automatically once the
+ * server answers again. The server is the source of truth — a number changed
+ * by one teacher (or the office) is what every other teacher sees.
  */
 import * as SecureStore from 'expo-secure-store';
 import { Linking, Platform } from 'react-native';
-import { apiGet } from './http';
+import { apiGet, apiPost } from './http';
 import { registerWaClass } from './backup';
 
 // ---------------------------------------------------------------------------
@@ -22,11 +23,84 @@ function mapKey(className: string): string {
   return `wa_map_${className.trim().replace(/[^a-zA-Z0-9._-]/g, '')}`;
 }
 
+function pendingKey(className: string): string {
+  return `wa_pending_${className.trim().replace(/[^a-zA-Z0-9._-]/g, '')}`;
+}
+
+/** Rolls whose on-device number the server hasn't accepted yet. */
+async function getPendingRolls(className: string): Promise<Set<string>> {
+  try {
+    const raw = await SecureStore.getItemAsync(pendingKey(className));
+    const arr = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch {
+    return new Set();
+  }
+}
+
+async function setPendingRolls(className: string, rolls: Set<string>): Promise<void> {
+  try {
+    await SecureStore.setItemAsync(pendingKey(className), JSON.stringify([...rolls]));
+  } catch {
+    // non-fatal
+  }
+}
+
+/** Server route that saves one student's number (see api.php). */
+const SET_WHATSAPP_ROUTE = 'students/set-whatsapp';
+
+/** Upload one number to the server. Throws when the server can't save it. */
+async function postWhatsappNumber(
+  className: string,
+  roll: string,
+  normalized: string
+): Promise<void> {
+  await apiPost<{ ok?: boolean }>(SET_WHATSAPP_ROUTE, {
+    class: className,
+    roll,
+    whatsapp: normalized,
+  });
+}
+
+/** Classes whose pending local numbers are already being uploaded. */
+const syncRunning = new Set<string>();
+
+/**
+ * Upload on-device numbers the server doesn't have yet (saved while offline,
+ * or before this release). Runs in the background; never throws. Only uploads
+ * where the server field is empty — it never overwrites a number the office
+ * already has on file.
+ */
+async function syncPendingLocal(
+  className: string,
+  server: Record<string, string>,
+  local: Record<string, string>
+): Promise<void> {
+  if (syncRunning.has(className)) return;
+  syncRunning.add(className);
+  try {
+    const pending = await getPendingRolls(className);
+    const rolls = Object.keys(local).filter((roll) => local[roll] && !server[roll]);
+    for (const roll of rolls) {
+      try {
+        await postWhatsappNumber(className, roll, local[roll]);
+        pending.delete(roll);
+      } catch {
+        pending.add(roll);
+      }
+    }
+    await setPendingRolls(className, pending);
+  } finally {
+    syncRunning.delete(className);
+  }
+}
+
 /**
  * Load the { roll -> number } map for a class (rolls are strings).
- * The site's student records are the source of truth; on-device numbers
- * (entered when offline) override them. Falls back to the local map when the
- * server is unreachable.
+ * The server's student records are the source of truth; on-device numbers
+ * fill gaps, and numbers saved while offline (pending) override the server
+ * until they upload. Falls back to the local map when the server is
+ * unreachable.
  */
 export async function getWhatsappMap(className: string): Promise<Record<string, string>> {
   const server: Record<string, string> = {};
@@ -50,7 +124,16 @@ export async function getWhatsappMap(className: string): Promise<Record<string, 
   } catch {
     local = {};
   }
-  return { ...server, ...local };
+
+  // Upload anything saved on-device that the server doesn't have yet.
+  void syncPendingLocal(className, server, local);
+
+  const pending = await getPendingRolls(className);
+  const pendingMap: Record<string, string> = {};
+  for (const roll of pending) {
+    if (local[roll]) pendingMap[roll] = local[roll];
+  }
+  return { ...local, ...server, ...pendingMap };
 }
 
 /** Get a single student's number ('' when not on file). */
@@ -62,22 +145,42 @@ export async function getWhatsappNumber(
   return map[roll] || '';
 }
 
-/** Upsert one student's number; returns the normalized value stored. */
+/**
+ * Upsert one student's number. Saves to the school server first so every
+ * teacher and the office see it; keeps the on-device copy as a cache and as
+ * an offline fallback. Returns whether the server accepted it — when false,
+ * the number is saved on this device only and marked pending for automatic
+ * upload later. Never throws.
+ */
 export async function setWhatsappNumber(
   className: string,
   roll: string,
   number: string
-): Promise<void> {
-  const map = await getWhatsappMap(className);
+): Promise<{ savedToServer: boolean }> {
   const normalized = normalizeNumber(number);
-  if (normalized) map[roll] = normalized;
-  else delete map[roll];
+  let savedToServer = false;
   try {
+    await postWhatsappNumber(className, roll, normalized);
+    savedToServer = true;
+  } catch {
+    savedToServer = false;
+  }
+
+  try {
+    const raw = await SecureStore.getItemAsync(mapKey(className));
+    const map: Record<string, string> = raw ? JSON.parse(raw) : {};
+    if (normalized) map[roll] = normalized;
+    else delete map[roll];
     await SecureStore.setItemAsync(mapKey(className), JSON.stringify(map));
+    const pending = await getPendingRolls(className);
+    if (savedToServer || !normalized) pending.delete(roll);
+    else pending.add(roll);
+    await setPendingRolls(className, pending);
     await registerWaClass(className);
   } catch {
-    // non-fatal
+    // non-fatal: the server save (if it worked) is what matters
   }
+  return { savedToServer };
 }
 
 // ---------------------------------------------------------------------------

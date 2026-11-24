@@ -10,6 +10,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useRouter } from 'expo-router';
 import { COLORS, FONT, SHADOW, SPACING } from '@/constants/theme';
 import PrincipalHome from '@/components/home/PrincipalHome';
 import SectionHeadHome from '@/components/home/SectionHeadHome';
@@ -23,11 +24,12 @@ import type { AdminStats, ClassStatus } from '@/types';
 export type HeadsTab = 'overview' | 'attendance' | 'classes' | 'notices';
 export type HeadsAttFilter = 'absent' | 'present';
 
-const TABS: { key: HeadsTab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+const TABS: { key: HeadsTab | 'reckoner'; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'overview', label: 'Overview', icon: 'home-outline' },
   { key: 'attendance', label: 'Attendance', icon: 'people-outline' },
   { key: 'classes', label: 'Classes', icon: 'school-outline' },
   { key: 'notices', label: 'Notices', icon: 'mail-outline' },
+  { key: 'reckoner', label: 'Reckoner', icon: 'document-text-outline' },
 ];
 
 export default function HeadsHome({
@@ -43,6 +45,7 @@ export default function HeadsHome({
   onSync: () => void;
   onTabChange?: () => void;
 }) {
+  const router = useRouter();
   const [tab, setTab] = useState<HeadsTab>('overview');
   const [attFilter, setAttFilter] = useState<HeadsAttFilter>('absent');
   const [attRows, setAttRows] = useState<ReportRow[] | null>(null);
@@ -129,7 +132,7 @@ export default function HeadsHome({
           return (
             <Pressable
               key={t.key}
-              onPress={() => openTab(t.key)}
+              onPress={() => (t.key === 'reckoner' ? router.push('/reckoner') : openTab(t.key))}
               style={({ pressed }) => [styles.tabBtn, pressed && styles.pressed]}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}

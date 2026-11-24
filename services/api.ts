@@ -433,6 +433,47 @@ export async function fetchReport(f: {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Daily Reckoner (Principal / Section Head / admin)
+// ---------------------------------------------------------------------------
+
+export interface ReckonerClassRow {
+  class: string;
+  sec: string;
+  total: number;
+  present: number;
+  absent: number;
+  unmarked: number;
+  absent_rolls: number[];
+}
+
+export interface ReckonerBlock {
+  key: string;
+  title: string;
+  classes: ReckonerClassRow[];
+  grand_total: number;
+  total_present: number;
+  total_absent: number;
+  unmarked: number;
+  attendance_pct: number;
+}
+
+export interface ReckonerData {
+  date: string;
+  blocks: ReckonerBlock[];
+}
+
+/**
+ * Fetch the Daily Reckoner for a date (defaults to today server-side).
+ * Blocks are scoped server-side: a section head sees only their own wing,
+ * the principal and admin see all four blocks (Pre-School, Boys, Girls,
+ * College). Total = active students; present/absent come from that day's
+ * records; unmarked = students with no record that day.
+ */
+export async function fetchReckoner(date?: string): Promise<ReckonerData> {
+  return call(() => apiGet<ReckonerData>('reports/reckoner', { date }));
+}
+
 /**
  * Admin audit (Teacher-wise report) with its native filters
  * (class / teacher / date range / on-time-or-late).

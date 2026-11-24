@@ -2,7 +2,7 @@
   "expo": {
     "name": "Bio Attendance",
     "slug": "sps-attendance",
-    "version": "1.4.18",
+    "version": "1.4.19",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -27,7 +27,7 @@
       },
       "package": "com.sps.attendance",
       "allowBackup": true,
-      "versionCode": 24,
+      "versionCode": 25,
       "permissions": [
         "REQUEST_INSTALL_PACKAGES",
         "ACCESS_FINE_LOCATION",

@@ -163,6 +163,12 @@ function RootNavigator() {
               }}
             />
             <Stack.Screen
+              name="reckoner/index"
+              options={{
+                headerShown: false, // screen renders its own design-system app bar
+              }}
+            />
+            <Stack.Screen
               name="web/[page]"
               options={{
                 headerShown: true,

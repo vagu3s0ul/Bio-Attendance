@@ -27,7 +27,7 @@ import {
   View,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Redirect } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import Screen from '@/components/Screen';
 import AppBar from '@/components/AppBar';
 import Card from '@/components/Card';
@@ -124,6 +124,7 @@ function daysAgoISO(days: number): string {
 
 export default function ReportsScreen() {
   const { user } = useSession();
+  const router = useRouter();
   const isAdmin = user?.role === 'admin';
   // Teacher-wise is for admin, head (section head) and principal only.
   const canSeeTeacherWise =
@@ -386,6 +387,22 @@ export default function ReportsScreen() {
     <Screen>
       <AppBar />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        {canSeeTeacherWise ? (
+          <Pressable
+            style={({ pressed }) => [styles.reckonerBtn, pressed && { opacity: 0.85 }]}
+            onPress={() => router.push('/reckoner')}
+            accessibilityRole="button"
+          >
+            <Ionicons name="document-text-outline" size={18} color={COLORS.primary} />
+            <View style={styles.reckonerBtnTextWrap}>
+              <Text style={styles.reckonerBtnText}>Daily Reckoner</Text>
+              <Text style={styles.reckonerBtnHint}>
+                One-page attendance summary for heads &amp; principal
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward-outline" size={16} color={COLORS.textFaint} />
+          </Pressable>
+        ) : null}
         {/* Picker — full width, above the mode buttons */}
         <Card style={styles.pickerCard}>
           {mode === 'daily' || mode === 'weekly' ? (
@@ -1380,4 +1397,18 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   modalCancelText: { color: COLORS.text, fontSize: 14, fontFamily: FONT.regular },
+  reckonerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.outline,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  reckonerBtnTextWrap: { flex: 1, gap: 1 },
+  reckonerBtnText: { fontSize: 14, fontFamily: FONT.medium, fontWeight: '600', color: COLORS.text },
+  reckonerBtnHint: { fontSize: 11.5, fontFamily: FONT.regular, color: COLORS.textMuted },
 });

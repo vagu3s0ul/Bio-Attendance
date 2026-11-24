@@ -37,6 +37,11 @@ export interface EntryStudent {
   /** True when the student is marked Absent; null when the database has no
    *  Status column yet. */
   absent: boolean | null;
+  /** True when a daily record exists for this student today. The server
+   *  sends absent:false for students with no record at all, so present must
+   *  only count marked && !absent — otherwise the whole unmarked class
+   *  shows as present. */
+  marked?: boolean;
 }
 
 export interface EntryFormData {

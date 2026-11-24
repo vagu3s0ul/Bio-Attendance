@@ -30,8 +30,11 @@ export default function TeacherHome({
   const loadEntryCounts = React.useCallback(async () => {
     try {
       const form = await fetchEntry();
-      setEntryPresent(form.students.filter((s) => s.absent === false).length);
-      setEntryAbsent(form.students.filter((s) => s.absent === true).length);
+      // Present = a record exists today AND not marked absent. Unmarked
+      // students arrive with absent:false, so absent===false alone counted
+      // the whole class present before any entry was taken.
+      setEntryPresent(form.students.filter((s) => s.marked && s.absent === false).length);
+      setEntryAbsent(form.students.filter((s) => s.marked && s.absent === true).length);
       setLastSyncAt(Date.now());
     } catch {
       // fall back to stats.entered

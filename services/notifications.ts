@@ -38,7 +38,6 @@ import { Alert, Linking, Platform } from 'react-native';
 import { apiGet, apiPost } from './http';
 import { getBaseUrl } from './settings';
 
-const LAST_SEEN_KEY = 'sps_notif_last_seen';
 const PUSH_TOKEN_KEY = 'sps_push_token';
 
 export interface AppNotification {
@@ -125,74 +124,6 @@ export async function registerPushToken(): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-export async function fetchNotifications(): Promise<AppNotification[]> {
-  try {
-    const data = await apiGet<{ notifications?: AppNotification[] }>('notifications/list');
-    return Array.isArray(data?.notifications) ? data.notifications : [];
-  } catch {
-    return [];
-  }
-}
-
-export async function getLastSeenId(): Promise<string | null> {
-  try {
-    return await SecureStore.getItemAsync(LAST_SEEN_KEY);
-  } catch {
-    return null;
-  }
-}
-
-export async function setLastSeenId(id: string): Promise<void> {
-  try {
-    await SecureStore.setItemAsync(LAST_SEEN_KEY, id);
-  } catch {
-    // non-fatal
-  }
-}
-
-/**
- * Poll the feed and fire a local notification for each item newer than the
- * last seen id. Returns the number of new notifications shown.
- */
-export async function pollNotifications(): Promise<number> {
-  if (Platform.OS === 'web') return 0;
-  ensureHandler();
-  const list = await fetchNotifications();
-  if (list.length === 0) return 0;
-
-  const lastSeen = await getLastSeenId();
-  // items assumed newest-first; find new ones.
-  const newItems: AppNotification[] = [];
-  for (const n of list) {
-    if (lastSeen && String(n.id) === lastSeen) break;
-    newItems.push(n);
-  }
-  // If nothing was seen before, only notify about the single newest to avoid spam.
-  const toNotify = lastSeen ? newItems : list.slice(0, 1);
-
-  for (const n of toNotify) {
-    try {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: n.title || 'New notification',
-          body: n.body || '',
-          data: { notificationId: String(n.id), link: n.link, attachment: n.attachment, image: n.image },
-          priority: Notifications.AndroidNotificationPriority.HIGH,
-          sound: 'default',
-        },
-        trigger: null,
-      });
-    } catch {
-      // ignore individual failures
-    }
-  }
-
-  if (list.length > 0) {
-    await setLastSeenId(String(list[0].id));
-  }
-  return toNotify.length;
 }
 
 /** Open a link/attachment URL. */

@@ -212,8 +212,9 @@ export default function NoticesScreen() {
 
         {visible.map((n) => {
           const s = senderStyle(n.from);
+          const isOrder = (n.from || '').toLowerCase().includes('principal');
           return (
-            <Panel key={n.id} style={[styles.card, !n.read && styles.cardUnread]}>
+            <Panel key={n.id} style={[styles.card, !n.read && styles.cardUnread, isOrder && styles.cardOrder]}>
               <View style={styles.cardHead}>
                 <IconTile icon={s.icon} tone={s.tone} size={40} radius={13} iconSize={18} />
                 <View style={styles.flex}>
@@ -234,6 +235,12 @@ export default function NoticesScreen() {
                 {!n.read ? <View style={styles.dot} /> : null}
               </View>
 
+              {isOrder ? (
+                <View style={styles.orderPill}>
+                  <Ionicons name="shield-checkmark" size={11} color={COLORS.primary} />
+                  <Text style={styles.orderPillText}>PRINCIPAL ORDER</Text>
+                </View>
+              ) : null}
               <Text style={styles.subject} numberOfLines={2}>
                 {n.subject || '(no subject)'}
               </Text>
@@ -351,6 +358,25 @@ const styles = StyleSheet.create({
   cardUnread: { borderWidth: 1, borderColor: COLORS.primarySoft },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   sender: { fontSize: 13.5, fontFamily: FONT.regular, fontWeight: '400', color: COLORS.text },
+  cardOrder: { borderLeftWidth: 3, borderLeftColor: COLORS.primary },
+  orderPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    backgroundColor: COLORS.primarySoft,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginBottom: 6,
+  },
+  orderPillText: {
+    fontSize: 9.5,
+    fontFamily: FONT.medium,
+    fontWeight: '600',
+    color: COLORS.primary,
+    letterSpacing: 0.6,
+  },
   senderSub: { fontSize: 11.5, color: COLORS.textMuted, marginTop: 1, fontFamily: FONT.regular },
   time: { fontSize: 11, color: COLORS.textFaint, fontFamily: FONT.regular },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.primary },

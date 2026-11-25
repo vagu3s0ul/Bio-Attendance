@@ -1,8 +1,1 @@
-{
-  "version": "1.4.15",
-  "versionCode": 21,
-  "apkUrl": "https://github.com/vagu3s0ul/attendance_app/releases/download/v1.4.15/bio-attendance.apk",
-  "notes": "Background download support.",
-  "force": false,
-  "sha256": "666b4705a70ab9ff8c0af2a5ff1e5dcfa1247d6e4786b007839a32ec7a2433e9"
-}
+{"apkUrl": "https://github.com/vagu3s0ul/Bio-Attendance/releases/download/v1.4.21/app-release.apk", "notes": "1.4.21: principal overview update - Verify Ledger verification sheet (sealed classes out of 46, pending list, today's present/absent, verified stamp), Issue Executive Order composer posted to Notices for all teachers with a PRINCIPAL ORDER highlight, wing-wise Uniform and Fee defaulters (Pre/Girls/Boys/College), new Staff Punctuality screen (entry time vs cutoff + recent on-time rate), Campus Digest now opens the in-app Daily Reckoner, and a single bottom nav on the principal home. Server: notifications module wired into api.php so sends work.", "sha256": "0411acc776fd47670d7c364254e7a84dc286dc665866cb8059445f55e42f5bb7", "version": "1.4.21", "versionCode": 27}

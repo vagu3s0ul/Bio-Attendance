@@ -56,9 +56,9 @@ export interface InstalledInfo {
 
 /** Read the version of the currently installed build. */
 export function installedInfo(): InstalledInfo {
-  const version = Application.nativeApplicationVersion || Constants.expoConfig?.version || '1.4.20';
+  const version = Application.nativeApplicationVersion || Constants.expoConfig?.version || '1.4.21';
   const codeRaw = Application.nativeBuildVersion;
-  const versionCode = codeRaw ? Number(codeRaw) : (Constants.expoConfig?.android?.versionCode ?? 26);
+  const versionCode = codeRaw ? Number(codeRaw) : (Constants.expoConfig?.android?.versionCode ?? 27);
   return { version, versionCode: Number.isFinite(versionCode) ? versionCode : 26 };
 }
 

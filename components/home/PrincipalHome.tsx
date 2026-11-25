@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { COLORS, FONT, RADIUS, SPACING } from '@/constants/theme';
 import { IconTile, Panel, Pill, QuickTile, SectionHeader } from '@/components/UI';
+import VerifyLedgerSheet from '@/components/home/VerifyLedgerSheet';
 import { useSession } from '@/store/session';
 import { fetchNotices, Notice } from '@/services/api';
 import type { AdminStats, ClassStatus } from '@/types';
@@ -70,12 +71,9 @@ export default function PrincipalHome({
     void loadNotices();
   }, [loadNotices]);
 
-  const verifyCutoff = () => {
-    Alert.alert(
-      'Cutoff Enforced',
-      'Attendance records are sealed after the morning cutoff. Late entries require secretariat sign-off before they are stamped.'
-    );
-  };
+  // Verify Ledger opens the verification sheet: sealed count, pending classes,
+  // today's head-count and the timestamp the principal checked it.
+  const [verifyOpen, setVerifyOpen] = useState(false);
 
   const wingRows = [...roster]
     .sort((a, b) => {
@@ -126,7 +124,7 @@ export default function PrincipalHome({
           <Pill label="Stamped" tone="mint" />
         </View>
         <Pressable
-          onPress={verifyCutoff}
+          onPress={() => setVerifyOpen(true)}
           style={({ pressed }) => [styles.verifyBtn, pressed && styles.pressed]}
         >
           <Ionicons name="shield-checkmark" size={13} color={COLORS.primary} />
@@ -227,7 +225,7 @@ export default function PrincipalHome({
       </Panel>
       <View style={styles.actionRow}>
         <Pressable
-          onPress={() => router.push('/notices')}
+          onPress={() => router.push('/orders' as any)}
           style={({ pressed }) => [styles.primaryBtn, pressed && styles.pressed]}
         >
           <Ionicons name="add-circle-outline" size={17} color="#fff" />
@@ -304,38 +302,38 @@ export default function PrincipalHome({
       <View style={styles.gridRow}>
         <QuickTile
           icon="person-remove"
-          title="Defaulters Roster"
-          subtitle="Repeated absence list"
+          title="Uniform Defaulters"
+          subtitle="Wing-wise uniform checks"
           tone="rose"
           columns={2}
-          onPress={() => router.push('/defaulters')}
+          onPress={() => router.push('/defaulters?tab=uniform' as any)}
         />
         <QuickTile
           icon="ribbon-outline"
           title="Staff Punctuality"
-          subtitle="Faculty biometric sign-in"
+          subtitle="Sign-in vs cutoff"
           tone="lavender"
           columns={2}
-          onPress={() => router.push('/web/audit')}
+          onPress={() => router.push('/punctuality' as any)}
         />
       </View>
       <View style={styles.gridRow}>
         <QuickTile
           icon="stats-chart-outline"
           title="Campus Digest"
-          subtitle="Daily executive summary"
+          subtitle="Daily Reckoner"
           tone="sky"
           columns={2}
-          onPress={() => router.push('/web/reports')}
+          onPress={() => router.push('/reckoner' as any)}
         />
         <QuickTile
           icon="finger-print-outline"
-          title="Audit Trail Logs"
-          subtitle="Tamper-proof ledger"
+          title="Fee Defaulters"
+          subtitle="Wing-wise dues ledger"
           tone="peach"
           dot
           columns={2}
-          onPress={() => router.push('/web/audit')}
+          onPress={() => router.push('/defaulters?tab=fees' as any)}
         />
       </View>
 
@@ -354,6 +352,16 @@ export default function PrincipalHome({
         <Ionicons name="shield-checkmark" size={14} color={COLORS.textFaint} />
         <Text style={styles.footerText}>SPS Institutional Attendance Network • Sialkot</Text>
       </Pressable>
+
+      <VerifyLedgerSheet
+        visible={verifyOpen}
+        roster={roster}
+        totalStudents={totalStudents}
+        presentTotal={presentTotal}
+        absentTotal={absentTotal}
+        deadline={stats?.deadline}
+        onClose={() => setVerifyOpen(false)}
+      />
     </View>
   );
 }

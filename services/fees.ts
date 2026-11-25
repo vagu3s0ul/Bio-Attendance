@@ -54,6 +54,8 @@ export interface FeeRow {
   /** amount - paid (negative when overpaid). */
   balance: number;
   note: string;
+  /** Set on wing-wide answers: the class the student belongs to. */
+  className?: string;
 }
 
 export interface FeeTotals {
@@ -76,6 +78,11 @@ export interface FeeDues {
 
 export interface FeeDefaulters {
   className: string;
+  /** 'class' or 'wing' — how the list was scoped. */
+  scope?: 'class' | 'wing';
+  wing?: string | null;
+  /** Every class behind the answer (a whole wing in wing mode). */
+  classes?: string[];
   month: string;
   rows: FeeRow[];
   totals: FeeTotals & { defaulters: number };
@@ -87,9 +94,13 @@ export function fetchFeeDues(q: { className?: string; month?: string }): Promise
 
 export function fetchFeeDefaulters(q: {
   className?: string;
+  /** Pre-School | Girls | Boys | College — mutually exclusive with className. */
+  wing?: string;
   month?: string;
 }): Promise<FeeDefaulters> {
-  return call(() => apiGet<FeeDefaulters>('fee/defaulters', { class: q.className, month: q.month }));
+  return call(() =>
+    apiGet<FeeDefaulters>('fee/defaulters', { class: q.className, wing: q.wing, month: q.month })
+  );
 }
 
 export interface FeeSaveResult {
@@ -295,6 +306,8 @@ export type DefaulterType = 'uniform' | 'absent';
 export interface DefaulterRow {
   roll: string;
   name: string;
+  /** Set on wing-wide answers: the class the student belongs to. */
+  className?: string;
   /** Days in the range this student was flagged. */
   days: number;
   /** How many days each checkpoint failed (uniform rows only). */
@@ -303,11 +316,16 @@ export interface DefaulterRow {
 
 export interface DefaulterReport {
   className: string;
+  /** 'class' or 'wing' — how the list was scoped. */
+  scope?: 'class' | 'wing';
+  wing?: string | null;
+  /** Every class behind the answer (a whole wing in wing mode). */
+  classes?: string[];
   type: DefaulterType;
   /** YYYY-MM-DD */
   from: string;
   to: string;
-  /** Days the class actually had attendance in the range. */
+  /** Days the classes actually had attendance in the range. */
   days: number;
   rows: DefaulterRow[];
   perCheckpoint?: Partial<Record<CheckpointKey, number>>;
@@ -318,6 +336,8 @@ export interface DefaulterReport {
 export function fetchDefaulters(q: {
   type: DefaulterType;
   className?: string;
+  /** Pre-School | Girls | Boys | College — mutually exclusive with className. */
+  wing?: string;
   from: string;
   to: string;
 }): Promise<DefaulterReport> {
@@ -325,6 +345,7 @@ export function fetchDefaulters(q: {
     apiGet<DefaulterReport>('reports/defaulters', {
       type: q.type,
       class: q.className,
+      wing: q.wing,
       from: q.from,
       to: q.to,
     })

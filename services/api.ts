@@ -153,6 +153,69 @@ export async function markNoticesRead(ids: number[]): Promise<void> {
 }
 
 /**
+ * Post an executive order into the staff notice feed (principal / admin).
+ * It lands in every teacher's Notices list, labelled with the principal's
+ * shield highlight because the sender is the principal account.
+ */
+export async function sendExecutiveOrder(q: {
+  subject: string;
+  body: string;
+}): Promise<{ ok: boolean; id: number }> {
+  return call(() =>
+    apiPost<{ ok: boolean; id: number }>('notices/send', {
+      subject: q.subject,
+      body: q.body,
+      audience: 'teachers',
+    })
+  );
+}
+
+/** One teacher's sign-in line on the Staff Punctuality screen. */
+export interface PunctualityRow {
+  username: string;
+  name: string;
+  className: string;
+  wing: string;
+  /** False until the teacher enters attendance today. */
+  hasEntry: boolean;
+  /** "08:12 AM" — the day's first entry, null before it happens. */
+  entryAt: string | null;
+  late: boolean;
+  /** Days inside the window with an on-time first entry. */
+  onTime: number;
+  /** Days inside the window with a late first entry. */
+  lateDays: number;
+  /** Days with any entry at all (the rate's denominator). */
+  days: number;
+  /** Percentage of recorded days that were on time. */
+  rate: number;
+}
+
+export interface PunctualityData {
+  date: string;
+  from: string;
+  days: number;
+  /** "09:30 AM" */
+  deadline: string;
+  stats: {
+    total: number;
+    onTimeToday: number;
+    lateToday: number;
+    pendingToday: number;
+    avgRate: number;
+  };
+  rows: PunctualityRow[];
+}
+
+/**
+ * Teacher punctuality against the entry cutoff: today's first entry per
+ * teacher plus their on-time rate over the recent window (principal / heads).
+ */
+export async function fetchPunctuality(days = 14): Promise<PunctualityData> {
+  return call(() => apiGet<PunctualityData>('staff/punctuality', { days }));
+}
+
+/**
  * Fetch the Daily Entry form for a given date (defaults to today): the
  * students of the signed-in teacher's class plus their saved state.
  */

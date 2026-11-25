@@ -29,7 +29,7 @@ import {
   View,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as FileSystem from 'expo-file-system';
 import Screen from '@/components/Screen';
@@ -78,6 +78,17 @@ const RANGES: { key: RangeKey; label: string }[] = [
   { key: 'week', label: 'Last 7 days' },
   { key: 'month', label: 'This month' },
   { key: '30', label: 'Last 30 days' },
+];
+
+/**
+ * The principal reviews whole wings, not single classes. The server groups
+ * classes into these four blocks exactly as the Daily Reckoner does.
+ */
+const WINGS: { key: string; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'Pre-School', label: 'Pre', icon: 'color-palette-outline' },
+  { key: 'Girls', label: 'Girls', icon: 'female-outline' },
+  { key: 'Boys', label: 'Boys', icon: 'male-outline' },
+  { key: 'College', label: 'College', icon: 'school-outline' },
 ];
 
 const TIME_SLOTS = ['08:00', '10:00', '14:00', '16:00', '18:00'];
@@ -138,8 +149,21 @@ export default function DefaultersScreen() {
   const { user } = useSession();
   const initial = ((user?.name || 'U').trim()[0] || 'U').toUpperCase();
 
-  const [tab, setTab] = useState<Tab>('absent');
+  // Entry points may preselect a tab and a wing, e.g. the principal's
+  // "Fee Defaulters" tile opens ?tab=fees.
+  const params = useLocalSearchParams<{ tab?: string; wing?: string }>();
+  const initialTab: Tab =
+    params.tab === 'fees' || params.tab === 'uniform' || params.tab === 'absent'
+      ? params.tab
+      : 'absent';
+  const initialWing =
+    WINGS.find((w) => w.key.toLowerCase() === String(params.wing ?? '').toLowerCase())?.key ?? '';
+
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [isAdmin, setIsAdmin] = useState(false);
+  /** Principal / section head: the list is scoped to a whole wing. */
+  const [wingMode, setWingMode] = useState(false);
+  const [wing, setWing] = useState<string>(initialWing || WINGS[0].key);
   const [classes, setClasses] = useState<string[]>([]);
   const [className, setClassName] = useState('');
   const [range, setRange] = useState<RangeKey>('month');
@@ -155,7 +179,11 @@ export default function DefaultersScreen() {
   const [waMap, setWaMap] = useState<Record<string, string>>({});
   const [waInstalled, setWaInstalled] = useState<boolean | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [numberFor, setNumberFor] = useState<{ roll: string; name: string } | null>(null);
+  const [numberFor, setNumberFor] = useState<{
+    className: string;
+    roll: string;
+    name: string;
+  } | null>(null);
 
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [dayChoice, setDayChoice] = useState(0);
@@ -205,6 +233,9 @@ export default function DefaultersScreen() {
           if (!active) return;
           setClasses(list);
           setClassName((prev) => prev || list[0] || '');
+        } else if (p.role === 'principal' || p.role === 'section_head') {
+          // The principal has no class of their own: review wing by wing.
+          setWingMode(true);
         } else {
           setClassName(p.className);
         }
@@ -224,14 +255,15 @@ export default function DefaultersScreen() {
   // --- data (all three reports in parallel for real tab-count badges) -------
 
   const load = useCallback(async () => {
-    if (!className) return;
+    if (!wingMode && !className) return;
     setLoading(true);
     setErr(null);
+    const scope = wingMode ? { wing } : { className };
     try {
       const [u, a, f] = await Promise.allSettled([
-        fetchDefaulters({ type: 'uniform', className, from, to }),
-        fetchDefaulters({ type: 'absent', className, from, to }),
-        fetchFeeDefaulters({ className, month }),
+        fetchDefaulters({ type: 'uniform', ...scope, from, to }),
+        fetchDefaulters({ type: 'absent', ...scope, from, to }),
+        fetchFeeDefaulters({ ...scope, month }),
       ]);
       if (u.status === 'fulfilled') setUniform(u.value);
       if (a.status === 'fulfilled') setAbsent(a.value);
@@ -250,7 +282,7 @@ export default function DefaultersScreen() {
     } finally {
       setLoading(false);
     }
-  }, [className, from, to, month]);
+  }, [className, wingMode, wing, from, to, month]);
 
   useEffect(() => {
     void load();
@@ -258,18 +290,7 @@ export default function DefaultersScreen() {
 
   useEffect(() => {
     setSelected(new Set());
-  }, [tab, className, range, month]);
-
-  useEffect(() => {
-    if (!className) return;
-    let active = true;
-    getWhatsappMap(className).then((map) => {
-      if (active) setWaMap(map);
-    });
-    return () => {
-      active = false;
-    };
-  }, [className, tab]);
+  }, [tab, className, wing, wingMode, range, month]);
 
   useEffect(() => {
     isWhatsAppInstalled().then(setWaInstalled);
@@ -299,7 +320,7 @@ export default function DefaultersScreen() {
       return fees.rows.map((r) => ({
         roll: r.roll,
         name: r.name,
-        className: fees.className,
+        className: r.className || fees.className,
         primaryChip: {
           icon: 'card-outline',
           label: `Fee Overdue: ${money(r.balance)}`,
@@ -314,7 +335,7 @@ export default function DefaultersScreen() {
         message: buildFeeMessage({
           studentName: r.name,
           roll: r.roll,
-          className: fees.className,
+          className: r.className || fees.className,
           month: fees.month,
           balance: r.balance,
           paid: r.paid,
@@ -332,7 +353,7 @@ export default function DefaultersScreen() {
         return {
           roll: r.roll,
           name: r.name,
-          className: report.className,
+          className: r.className || report.className,
           primaryChip: {
             icon: 'warning-outline',
             label: `${r.days} Day${r.days === 1 ? '' : 's'} Absent`,
@@ -347,7 +368,7 @@ export default function DefaultersScreen() {
           message: buildAbsentRangeMessage({
             studentName: r.name,
             roll: r.roll,
-            className: report.className,
+            className: r.className || report.className,
             from: report.from,
             to: report.to,
             days: r.days,
@@ -362,7 +383,7 @@ export default function DefaultersScreen() {
       return {
         roll: r.roll,
         name: r.name,
-        className: report.className,
+        className: r.className || report.className,
         primaryChip: {
           icon: 'shirt-outline',
           label: (failed.length > 0 ? failed.map(checkpointLabel).join(', ') : 'Uniform') + ' violation',
@@ -377,7 +398,7 @@ export default function DefaultersScreen() {
         message: buildUniformDefaulterMessage({
           studentName: r.name,
           roll: r.roll,
-          className: report.className,
+          className: r.className || report.className,
           from: report.from,
           to: report.to,
           failedItems: failed,
@@ -390,6 +411,48 @@ export default function DefaultersScreen() {
   const rowsRef = useRef<RowView[]>(rows);
   rowsRef.current = rows;
 
+  /**
+   * A roll number is unique inside a class, not across a whole wing, so a
+   * wing list keys every row by class + roll.
+   */
+  const keyOf = useCallback(
+    (r: { className: string; roll: string }) => (wingMode ? `${r.className}|${r.roll}` : r.roll),
+    [wingMode]
+  );
+
+  // WhatsApp numbers for every class on screen — a wing spans many classes, so
+  // each class map is fetched and merged under its own key.
+  useEffect(() => {
+    const classList = wingMode
+      ? Array.from(new Set(rows.map((r) => r.className))).filter(Boolean)
+      : className
+        ? [className]
+        : [];
+    if (classList.length === 0) {
+      setWaMap({});
+      return;
+    }
+    let active = true;
+    Promise.allSettled(classList.map((c) => getWhatsappMap(c).then((m) => ({ c, m }))))
+      .then((results) => {
+        if (!active) return;
+        const merged: Record<string, string> = {};
+        results.forEach((res) => {
+          if (res.status !== 'fulfilled') return;
+          const { c, m } = res.value;
+          Object.entries(m || {}).forEach(([roll, num]) => {
+            if ((num || '').trim() === '') return;
+            merged[wingMode ? `${c}|${roll}` : roll] = num;
+          });
+        });
+        setWaMap(merged);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [className, wingMode, rows]);
+
   const counts: Record<Tab, number> = {
     absent: absent?.rows.length ?? 0,
     uniform: uniform?.rows.length ?? 0,
@@ -398,10 +461,14 @@ export default function DefaultersScreen() {
 
   const unread = notices.filter((n) => !n.read).length;
 
-  const sendable = rows.filter((r) => (waMap[r.roll] || '').trim() !== '');
-  const selectedRows = rows.filter((r) => selected.has(r.roll));
-  const selectedSendable = selectedRows.filter((r) => (waMap[r.roll] || '').trim() !== '');
-  const allOn = sendable.length > 0 && sendable.every((r) => selected.has(r.roll));
+  const hasNumber = useCallback(
+    (r: { className: string; roll: string }) => (waMap[keyOf(r)] || '').trim() !== '',
+    [waMap, keyOf]
+  );
+  const sendable = rows.filter(hasNumber);
+  const selectedRows = rows.filter((r) => selected.has(keyOf(r)));
+  const selectedSendable = selectedRows.filter(hasNumber);
+  const allOn = sendable.length > 0 && sendable.every((r) => selected.has(keyOf(r)));
 
   // --- toast ---------------------------------------------------------------
 
@@ -428,10 +495,10 @@ export default function DefaultersScreen() {
 
   // --- sending -------------------------------------------------------------
 
-  const openRoll = useCallback(
-    async (roll: string) => {
-      const row = rowsRef.current.find((r) => r.roll === roll);
-      const number = waMap[roll] || '';
+  const openKey = useCallback(
+    async (key: string) => {
+      const row = rowsRef.current.find((r) => keyOf(r) === key);
+      const number = waMap[key] || '';
       if (!row || !number) return;
       try {
         await Linking.openURL(waLink(number, row.message));
@@ -439,7 +506,7 @@ export default function DefaultersScreen() {
         Alert.alert('WhatsApp', 'Could not open WhatsApp for ' + row.name);
       }
     },
-    [waMap]
+    [waMap, keyOf]
   );
 
   const advanceQueue = useCallback(() => {
@@ -453,8 +520,8 @@ export default function DefaultersScreen() {
     }
     queuePos.current = next;
     setQueueInfo({ index: next, total: queueRolls.current.length });
-    openRoll(queueRolls.current[next]);
-  }, [openRoll]);
+    openKey(queueRolls.current[next]);
+  }, [openKey]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
@@ -463,31 +530,31 @@ export default function DefaultersScreen() {
     return () => sub.remove();
   }, [advanceQueue]);
 
-  const startQueue = (rolls: string[]) => {
-    if (rolls.length === 0) return;
-    queueRolls.current = rolls;
+  const startQueue = (keys: string[]) => {
+    if (keys.length === 0) return;
+    queueRolls.current = keys;
     queuePos.current = 0;
-    setQueueInfo({ index: 0, total: rolls.length });
+    setQueueInfo({ index: 0, total: keys.length });
     showToast();
-    openRoll(rolls[0]);
+    openKey(keys[0]);
   };
 
-  const toggleSelect = (roll: string) => {
+  const toggleSelect = (key: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(roll)) next.delete(roll);
-      else next.add(roll);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };
 
   const selectAll = () => {
     setSelected((prev) => {
-      const all = sendable.map((r) => r.roll);
-      const on = all.length > 0 && all.every((roll) => prev.has(roll));
+      const all = sendable.map(keyOf);
+      const on = all.length > 0 && all.every((key) => prev.has(key));
       if (on) {
         const next = new Set(prev);
-        all.forEach((roll) => next.delete(roll));
+        all.forEach((key) => next.delete(key));
         return next;
       }
       return new Set<string>(all);
@@ -517,7 +584,7 @@ export default function DefaultersScreen() {
           when,
           title: `${titleBase} — ${row.name}`,
           body: `Tap to send the WhatsApp message for ${row.name} (Roll ${row.roll}).`,
-          link: waLink(waMap[row.roll] || '', row.message),
+          link: waLink(waMap[keyOf(row)] || '', row.message),
           student: row.name,
           roll: row.roll,
         });
@@ -580,9 +647,10 @@ export default function DefaultersScreen() {
   // --- render helpers ------------------------------------------------------
 
   const renderRow = (row: RowView) => {
-    const number = (waMap[row.roll] || '').trim();
-    const hasNumber = number !== '';
-    const on = selected.has(row.roll);
+    const key = keyOf(row);
+    const number = (waMap[key] || '').trim();
+    const numbered = number !== '';
+    const on = selected.has(key);
     const primaryTone = row.primaryChip.tone;
     const secondaryTone = row.secondaryChip.tone;
     return (
@@ -595,8 +663,8 @@ export default function DefaultersScreen() {
         />
         <Pressable
           style={styles.rowHead}
-          onPress={() => hasNumber && toggleSelect(row.roll)}
-          disabled={!hasNumber || queueInfo !== null}
+          onPress={() => numbered && toggleSelect(key)}
+          disabled={!numbered || queueInfo !== null}
         >
           <View style={on ? [styles.check, styles.checkOn] : styles.check}>
             {on ? <Ionicons name="checkmark" size={15} color={M3.onPrimary} /> : null}
@@ -647,8 +715,8 @@ export default function DefaultersScreen() {
 
         <Pressable
           style={styles.contactBox}
-          onPress={() => !hasNumber && setNumberFor({ roll: row.roll, name: row.name })}
-          disabled={hasNumber}
+          onPress={() => !numbered && setNumberFor({ className: row.className, roll: row.roll, name: row.name })}
+          disabled={numbered}
         >
           <View style={styles.contactIcon}>
             <Ionicons name="call-outline" size={16} color={M3.onSecondaryContainer} />
@@ -656,17 +724,17 @@ export default function DefaultersScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.contactLabel}>{row.contactLabel}</Text>
             <Text style={styles.contactNumber} numberOfLines={1}>
-              {hasNumber ? number : 'No number on file — tap to add'}
+              {numbered ? number : 'No number on file — tap to add'}
             </Text>
           </View>
           <View style={styles.contactChip}>
             <Ionicons
-              name={hasNumber ? 'logo-whatsapp' : 'add'}
+              name={numbered ? 'logo-whatsapp' : 'add'}
               size={12}
-              color={hasNumber ? M3.secondary : M3.primary}
+              color={numbered ? M3.secondary : M3.primary}
             />
-            <Text style={[styles.contactChipText, hasNumber ? styles.contactChipTextOn : styles.contactChipTextAdd]}>
-              {hasNumber ? 'WhatsApp' : 'Add'}
+            <Text style={[styles.contactChipText, numbered ? styles.contactChipTextOn : styles.contactChipTextAdd]}>
+              {numbered ? 'WhatsApp' : 'Add'}
             </Text>
           </View>
         </Pressable>
@@ -714,7 +782,9 @@ export default function DefaultersScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.headerTitle}>Defaulter Registry</Text>
             <Text style={styles.headerSub} numberOfLines={1}>
-              {className
+              {wingMode
+                ? `${wing === 'Pre-School' ? 'Pre-School' : wing} wing · Session ${sessionLabel()}`
+                : className
                 ? `Class ${className} · Session ${sessionLabel()}`
                 : isAdmin
                 ? 'All classes · Sialkot Campus'
@@ -726,6 +796,37 @@ export default function DefaultersScreen() {
             <Text style={styles.syncText}>Auto-Sync ON</Text>
           </View>
         </View>
+
+        {/* Wings — the principal reviews one whole block at a time */}
+        {wingMode ? (
+          <View style={styles.wingRow}>
+            {WINGS.map((w) => {
+              const active = wing === w.key;
+              return (
+                <Pressable
+                  key={w.key}
+                  onPress={() => setWing(w.key)}
+                  style={({ pressed }) => [
+                    styles.wingBtn,
+                    active && styles.wingBtnActive,
+                    pressed && styles.pressed,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                >
+                  <Ionicons
+                    name={w.icon}
+                    size={15}
+                    color={active ? M3.onPrimary : M3.onSurfaceVariant}
+                  />
+                  <Text style={[styles.wingBtnText, active && styles.wingBtnTextActive]}>
+                    {w.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
 
         {/* Tabs */}
         <ScrollView
@@ -787,7 +888,13 @@ export default function DefaultersScreen() {
                   Select All ({sendable.length} student{sendable.length === 1 ? '' : 's'})
                 </Text>
                 <Text style={styles.selectSub} numberOfLines={1}>
-                  {className ? `Class ${className}` : isAdmin ? 'All classes' : 'Loading…'}
+                  {wingMode
+                    ? `${wing === 'Pre-School' ? 'Pre-School' : wing} wing`
+                    : className
+                    ? `Class ${className}`
+                    : isAdmin
+                    ? 'All classes'
+                    : 'Loading…'}
                 </Text>
               </View>
               <Pressable style={styles.iconBtn} onPress={() => setFilterOpen(true)} hitSlop={6}>
@@ -879,7 +986,7 @@ export default function DefaultersScreen() {
                     styles.waBtn,
                     (selectedSendable.length === 0 || waInstalled === false) && styles.btnOff,
                   ]}
-                  onPress={() => startQueue(selectedSendable.map((r) => r.roll))}
+                  onPress={() => startQueue(selectedSendable.map(keyOf))}
                   disabled={selectedSendable.length === 0 || waInstalled === false}
                 >
                   <Ionicons name="logo-whatsapp" size={22} color={M3.onPrimary} />
@@ -927,6 +1034,25 @@ export default function DefaultersScreen() {
                   <Ionicons name="close" size={20} color={M3.onSurfaceVariant} />
                 </Pressable>
               </View>
+
+              {wingMode ? (
+                <>
+                  <Text style={styles.modalLabel}>Wing</Text>
+                  <View style={styles.modalChips}>
+                    {WINGS.map((w) => (
+                      <Pressable
+                        key={w.key}
+                        style={[styles.chip, wing === w.key && styles.chipActive]}
+                        onPress={() => setWing(w.key)}
+                      >
+                        <Text style={[styles.chipText, wing === w.key && styles.chipTextActive]}>
+                          {w.key}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </>
+              ) : null}
 
               {isAdmin && classes.length > 0 ? (
                 <>
@@ -1076,15 +1202,18 @@ export default function DefaultersScreen() {
           </View>
         </Modal>
 
-        {numberFor && className ? (
+        {numberFor ? (
           <WhatsAppNumberModal
             visible
-            className={className}
+            className={numberFor.className}
             roll={numberFor.roll}
             studentName={numberFor.name}
             onClose={() => setNumberFor(null)}
             onSaved={(number) => {
-              setWaMap((prev) => ({ ...prev, [numberFor.roll]: number }));
+              setWaMap((prev) => ({
+                ...prev,
+                [wingMode ? `${numberFor.className}|${numberFor.roll}` : numberFor.roll]: number,
+              }));
               setNumberFor(null);
             }}
           />
@@ -1166,6 +1295,32 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   headerSub: { fontSize: 12, color: M3.onSurfaceVariant, marginTop: 2, fontFamily: FONT.regular },
+
+  // Wing picker (principal / section head)
+  wingRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  wingBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: M3.surfaceContainerLow,
+  },
+  wingBtnActive: { backgroundColor: M3.primaryContainer },
+  wingBtnText: {
+    fontSize: 11.5,
+    fontFamily: FONT.regular,
+    fontWeight: '400',
+    color: M3.onSurfaceVariant,
+  },
+  wingBtnTextActive: { color: M3.onPrimary, fontWeight: '600' },
   syncPill: {
     flexDirection: 'row',
     alignItems: 'center',

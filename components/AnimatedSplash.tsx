@@ -147,7 +147,7 @@ export default function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
     };
   }, [crest, fade, footer, pill, ringPulse, ringSpin, scan, shimmer, subtitle, title]);
 
-  const version = Constants.expoConfig?.version ?? '1.4.21';
+  const version = Constants.expoConfig?.version ?? '1.4.22';
 
   const rise = (value: Animated.Value, distance = 14) => ({
     opacity: value,

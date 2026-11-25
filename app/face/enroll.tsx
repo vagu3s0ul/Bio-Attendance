@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONT, RADIUS, SPACING } from '@/constants/theme';
 import { clearFaceStudent, enrollFaceStudent } from '@/services/api';
 import { discardCapture, embeddingFromPhoto } from '@/services/face';
+import { useFaceCamera } from '@/hooks/useFaceCamera';
 import { SessionExpiredError } from '@/types';
 
 const TARGET_SAMPLES = 3;
@@ -46,17 +47,21 @@ export default function FaceEnrollScreen() {
   }
 
   const [permission, requestPermission] = useCameraPermissions();
-  const camera = useRef<CameraView>(null);
-  const [facing, setFacing] = useState<'front' | 'back'>('front');
-  // Camera restart state (fix 4): the native session can die while the app is
-  // backgrounded and CameraView does not heal itself — flipping front/back
-  // only worked because it forced a restart. Bumping camKey remounts the
-  // camera; cameraReady tracks whether it actually came back.
-  const [camKey, setCamKey] = useState(0);
-  const [cameraReady, setCameraReady] = useState(false);
-  const [cameraStalled, setCameraStalled] = useState(false);
-  const cameraReadyRef = useRef(false);
-  const stallRetryRef = useRef(0);
+  // Camera lifecycle (facing switch, stall watchdog, restart) is shared with
+  // the face check screen — see hooks/useFaceCamera.ts. The view must NOT be
+  // keyed by facing: remounting it to flip the lens races with the old native
+  // view's asynchronous unbindAll() and leaves a permanently black preview.
+  const {
+    camera,
+    facing,
+    camKey,
+    mounted: cameraMounted,
+    ready: cameraReady,
+    stalled: cameraStalled,
+    switchFacing,
+    restart: restartCamera,
+    onCameraReady,
+  } = useFaceCamera('front');
   const firstFocusRef = useRef(true);
 
   // Restart the camera every time this screen gains focus. The first focus
@@ -67,30 +72,9 @@ export default function FaceEnrollScreen() {
         firstFocusRef.current = false;
         return;
       }
-      setCamKey((k) => k + 1);
-    }, [])
+      restartCamera();
+    }, [restartCamera])
   );
-
-  // If the camera has not reported ready within ~6s of a (re)start, retry
-  // the mount once automatically (the back camera can be slow to reopen and
-  // 3s was too tight) — only if the retry also stalls, offer a manual
-  // restart instead of leaving a black preview.
-  useEffect(() => {
-    cameraReadyRef.current = false;
-    setCameraReady(false);
-    setCameraStalled(false);
-    const t = setTimeout(() => {
-      if (!cameraReadyRef.current) {
-        if (stallRetryRef.current < 1) {
-          stallRetryRef.current += 1;
-          setCamKey((k) => k + 1);
-        } else {
-          setCameraStalled(true);
-        }
-      }
-    }, 6000);
-    return () => clearTimeout(t);
-  }, [camKey, facing]);
 
   const [samples, setSamples] = useState<number[][]>([]);
   const [busy, setBusy] = useState(false);
@@ -331,20 +315,17 @@ export default function FaceEnrollScreen() {
 
   return (
     <View style={styles.root}>
-      <CameraView
-        key={`${facing}-${camKey}`}
-        ref={camera}
-        style={StyleSheet.absoluteFill}
-        facing={facing}
-        animateShutter={false}
-        onCameraReady={() => {
-          cameraReadyRef.current = true;
-          stallRetryRef.current = 0;
-          setCameraReady(true);
-          setCameraStalled(false);
-        }}
-        onMountError={(e) => setStatus(e?.message || 'Camera failed to start — tap restart below')}
-      />
+      {cameraMounted ? (
+        <CameraView
+          key={camKey}
+          ref={camera}
+          style={StyleSheet.absoluteFill}
+          facing={facing}
+          animateShutter={false}
+          onCameraReady={onCameraReady}
+          onMountError={(e) => setStatus(e?.message || 'Camera failed to start — tap restart below')}
+        />
+      ) : null}
 
       <SafeAreaView style={styles.overlay} edges={['top', 'bottom']}>
         <View style={styles.topBar}>
@@ -366,7 +347,7 @@ export default function FaceEnrollScreen() {
           </View>
           <View style={styles.topRight}>
             <Pressable
-              onPress={() => setFacing((f) => (f === 'front' ? 'back' : 'front'))}
+              onPress={switchFacing}
               hitSlop={12}
               style={({ pressed }) => [styles.roundBtn, pressed && styles.pressed]}
             >
@@ -394,10 +375,7 @@ export default function FaceEnrollScreen() {
         <View style={styles.bottom}>
           {cameraStalled ? (
             <Pressable
-              onPress={() => {
-                stallRetryRef.current = 0;
-                setCamKey((k) => k + 1);
-              }}
+              onPress={restartCamera}
               style={({ pressed }) => [styles.restartBtn, pressed && styles.pressed]}
             >
               <Ionicons name="refresh-outline" size={16} color="#fff" />

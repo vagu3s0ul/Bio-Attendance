@@ -21,6 +21,7 @@ import {
   findBestMatch,
   loadFaceModel,
 } from '@/services/face';
+import { useFaceCamera } from '@/hooks/useFaceCamera';
 import { SessionExpiredError } from '@/types';
 
 const SCAN_INTERVAL_MS = 900;
@@ -29,20 +30,23 @@ const UNKNOWN_STATUS_MS = 1800;
 export default function FaceScanScreen() {
   const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
-  const camera = useRef<CameraView>(null);
 
   const [roster, setRoster] = useState<FaceRoster | null>(null);
-  const [facing, setFacing] = useState<'back' | 'front'>('back');
-  const [cameraReady, setCameraReady] = useState(false);
-  // Camera restart state: flipping front/back (and the app coming back from
-  // background) can leave the native session dead, and onCameraReady does not
-  // always re-fire on a facing change alone. Keying the view by facing +
-  // camKey forces a real remount; the watchdog retries once by itself and
-  // then offers a manual restart instead of a frozen preview.
-  const [camKey, setCamKey] = useState(0);
-  const [cameraStalled, setCameraStalled] = useState(false);
-  const cameraReadyRef = useRef(false);
-  const stallRetryRef = useRef(0);
+  // Camera lifecycle (facing switch, stall watchdog, restart) is shared with
+  // the enrol screen — see hooks/useFaceCamera.ts. The view must NOT be keyed
+  // by facing: remounting it to flip the lens races with the old native view's
+  // asynchronous unbindAll() and leaves a permanently black preview.
+  const {
+    camera,
+    facing,
+    camKey,
+    mounted: cameraMounted,
+    ready: cameraReady,
+    stalled: cameraStalled,
+    switchFacing,
+    restart: restartCamera,
+    onCameraReady,
+  } = useFaceCamera('back');
   const [engineReady, setEngineReady] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [present, setPresent] = useState<string[]>([]);
@@ -105,27 +109,6 @@ export default function FaceScanScreen() {
       alive = false;
     };
   }, [handleExpired, router]);
-
-  // Camera stall watchdog: after a (re)start the camera must report ready
-  // within ~6s (the back camera can be slow to reopen). On the first stall
-  // retry the mount once automatically; only if that also stalls, show the
-  // manual restart button.
-  useEffect(() => {
-    cameraReadyRef.current = false;
-    setCameraReady(false);
-    setCameraStalled(false);
-    const t = setTimeout(() => {
-      if (!cameraReadyRef.current) {
-        if (stallRetryRef.current < 1) {
-          stallRetryRef.current += 1;
-          setCamKey((k) => k + 1);
-        } else {
-          setCameraStalled(true);
-        }
-      }
-    }, 6000);
-    return () => clearTimeout(t);
-  }, [camKey, facing]);
 
   // Live scan loop.
   useEffect(() => {
@@ -358,20 +341,17 @@ export default function FaceScanScreen() {
 
   return (
     <View style={styles.root}>
-      <CameraView
-        key={`${facing}-${camKey}`}
-        ref={camera}
-        style={StyleSheet.absoluteFill}
-        facing={facing}
-        animateShutter={false}
-        onCameraReady={() => {
-          cameraReadyRef.current = true;
-          stallRetryRef.current = 0;
-          setCameraReady(true);
-          setCameraStalled(false);
-        }}
-        onMountError={(e) => setStatus(e?.message || 'Camera failed to start — tap restart below')}
-      />
+      {cameraMounted ? (
+        <CameraView
+          key={camKey}
+          ref={camera}
+          style={StyleSheet.absoluteFill}
+          facing={facing}
+          animateShutter={false}
+          onCameraReady={onCameraReady}
+          onMountError={(e) => setStatus(e?.message || 'Camera failed to start — tap restart below')}
+        />
+      ) : null}
 
       <SafeAreaView style={styles.overlay} edges={['top', 'bottom']}>
         <View style={styles.topBar}>
@@ -389,10 +369,7 @@ export default function FaceScanScreen() {
             </Text>
           </View>
           <Pressable
-            onPress={() => {
-              setCameraReady(false);
-              setFacing((f) => (f === 'back' ? 'front' : 'back'));
-            }}
+            onPress={switchFacing}
             hitSlop={12}
             style={({ pressed }) => [styles.roundBtn, pressed && styles.pressed]}
           >
@@ -450,10 +427,7 @@ export default function FaceScanScreen() {
 
           {cameraStalled ? (
             <Pressable
-              onPress={() => {
-                stallRetryRef.current = 0;
-                setCamKey((k) => k + 1);
-              }}
+              onPress={restartCamera}
               style={({ pressed }) => [styles.restartBtn, pressed && styles.pressed]}
             >
               <Ionicons name="refresh-outline" size={16} color="#fff" />
